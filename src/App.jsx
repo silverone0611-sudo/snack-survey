@@ -1,0 +1,2688 @@
+import { useEffect, useState } from "react";
+import "./App.css";
+
+const STORAGE_KEY = "snack_survey_draft";
+
+const PACKAGING_ITEMS = [
+  {
+    id: "q3",
+    reasonId: "q4",
+    title: "가격과 양이 같다고 가정할 때, 둘 중 어떤 과자를 구입할 것인가요?",
+    image: "/images/q3.png",
+    options: ["A 상자형", "B 봉지형"],
+  },
+  {
+    id: "q5",
+    reasonId: "q6",
+    title: "가격과 양이 같다고 가정할 때, 둘 중 어떤 과자를 구입할 것인가요?",
+    image: "/images/q5.png",
+    options: ["A 상자형", "B 원통형"],
+  },
+  {
+    id: "q7",
+    reasonId: "q8",
+    title: "가격과 양이 같다고 가정할 때, 둘 중 어떤 과자를 구입할 것인가요?",
+    image: "/images/q7.png",
+    options: ["A 상자형", "B 원통형"],
+  },
+  {
+    id: "q9",
+    reasonId: "q10",
+    title: "가격과 양이 같다고 가정할 때, 둘 중 어떤 과자를 구입할 것인가요?",
+    image: "/images/q9.png",
+    options: ["A 원통형", "B 봉지형"],
+  },
+  {
+    id: "q11",
+    reasonId: "q12",
+    title: "가격과 양이 똑같은 과자라면, 어떤 포장을 가장 선호하나요?",
+    image: "/images/q11.png",
+    options: ["봉지형 포장", "상자형 포장", "원통형 포장"],
+  },
+  {
+    id: "q13",
+    reasonId: "q14",
+    title: "가격이나 양을 생각하지 않고 둘 중 더 선호하는 것은 무엇입니까?",
+    image: "/images/q13.png",
+    options: ["A 원통형", "B 봉지형"],
+  },
+];
+
+const REASONS = [
+  "더 맛있어 보여서",
+  "보관하기 편해서",
+  "들고 다니며 먹기 편할 것 같아서",
+  "디자인이 예뻐서",
+  "양이 더 많아 보여서",
+];
+
+const FREQUENCY_OPTIONS = [
+  "전혀 없다",
+  "1회 정도",
+  "2~3회",
+  "4~5회",
+  "6회 이상",
+];
+
+const LIKERT_OPTIONS = [
+  "전혀 그렇지 않다",
+  "그렇지 않다",
+  "보통이다",
+  "그렇다",
+  "매우 그렇다",
+];
+
+const POST_REASONS = [
+  "보관하기 편해서",
+  "먹다가 남겨도 다시 닫을 수 있어서",
+  "과자가 덜 부서질 것 같아서",
+  "디자인이 좋아 보여서",
+  "맛이나 제품 자체가 더 중요해서",
+  "분리배출이 어렵기 때문에",
+  "환경에 좋지 않을 것 같아서",
+  "실제로 살 때 어떻게 행동할지 잘 모르겠어서",
+  "기타",
+];
+
+const BINS = [
+  { id: "general", label: "🗑️ 일반" },
+  { id: "plastic", label: "🧴 플라스틱" },
+  { id: "vinyl", label: "🛍️ 비닐" },
+  { id: "metal", label: "🥫 금속" },
+  { id: "paper", label: "📄 종이" },
+];
+
+const POUCH_HOTSPOTS = [
+  {
+    id: "pouch",
+    label: "과자 봉지",
+    correctBin: "vinyl",
+    z: 10,
+    svg: {
+      type: "polygon",
+      points: "145,95 790,70 860,200 895,845 195,915 105,230",
+    },
+    pieceImage: "/images/piece_pouch.png",
+  },
+];
+
+const BOX_HOTSPOTS = [
+  {
+    id: "outer_box",
+    label: "상자",
+    correctBin: "paper",
+    z: 10,
+    svg: {
+      type: "path",
+      d:
+        "M18,515 L285,382 L962,654 L965,846 L865,957 L278,845 L12,655 Z " +
+        "M302,245 L425,105 L728,239 L894,287 L959,434 L924,557 L813,614 L566,562 L329,470 L238,357 Z",
+    },
+    pieceImage: "/images/piece_box_outer.png",
+  },
+  {
+    id: "inner_pack",
+    label: "속포장",
+    correctBin: "vinyl",
+    z: 30,
+    svg: {
+      type: "path",
+      d:
+        "M268,461 L365,391 L526,358 L672,412 L782,505 L833,632 " +
+        "L792,760 L665,828 L492,812 L353,760 L245,650 L210,542 Z " +
+        "M713,455 L817,411 L890,471 L900,610 L833,690 L742,651 Z",
+    },
+    pieceImage: "/images/piece_box_inner.png",
+  },
+];
+
+const PRINGLES_VIEWBOX = "0 0 1589 1027";
+
+const PRINGLES_HOTSPOTS = [
+  {
+    id: "body_print",
+    label: "원통 본체",
+    correctBin: "general",
+    z: 20,
+    svg: {
+      type: "polygon",
+      points:
+        "500,115 680,145 920,220 1195,310 1390,370 " +
+        "1210,895 1035,855 790,775 575,665 470,555 " +
+        "420,425 430,285",
+    },
+    pieceImage: "/images/piece_cylinder_print.png",
+  },
+  {
+    id: "lid",
+    label: "플라스틱 뚜껑",
+    correctBin: "plastic",
+    z: 80,
+    svg: {
+      type: "polygon",
+      points:
+        "195,660 235,595 315,535 425,505 535,520 630,580 " +
+        "690,665 700,745 655,820 560,870 440,890 315,865 " +
+        "220,805 175,730",
+    },
+    pieceImage: "/images/piece_cylinder_lid.png",
+  },
+  {
+    id: "bottom",
+    label: "알루미늄 바닥",
+    correctBin: "metal",
+    z: 100,
+    svg: {
+      type: "polygon",
+      points:
+        "1345,335 1470,360 1478,415 1260,930 1180,900 " +
+        "1215,780 1370,395",
+    },
+    pieceImage: "/images/piece_cylinder_bottom.png",
+  },
+];
+
+const VIDEO_EMBED_URL = "";
+
+const Q19_VIEWBOX = PRINGLES_VIEWBOX;
+
+const Q19_BODY_HIT = {
+  ...PRINGLES_HOTSPOTS.find((part) => part.id === "body_print"),
+};
+
+const Q19_LID_HIT = {
+  ...PRINGLES_HOTSPOTS.find((part) => part.id === "lid"),
+};
+
+const Q19_BOTTOM_ATTACHED_HIT = {
+  ...PRINGLES_HOTSPOTS.find((part) => part.id === "bottom"),
+};
+
+/*
+  q19에서 종이 부분을 제거한 뒤에는 알루미늄 바닥이 통에 붙은 위치가 아니라
+  떨어져 나온 바닥 조각 위치에서 선택되어야 합니다.
+
+  아래 좌표는 piece_q19_bottom.png의 실제 타원형 바닥 위치를 따라간 다각형 영역입니다.
+  사각형이 아니라 바닥 조각의 윤곽을 따라 선택되도록 조정했습니다.
+  만약 실제 화면에서 선택 위치가 약간 어긋나면 points 값만 미세 조정하면 됩니다.
+*/
+const Q19_BOTTOM_DETACHED_HIT = {
+  id: "bottom",
+  label: "알루미늄 바닥",
+  correctBin: "metal",
+  z: 120,
+  svg: {
+    type: "polygon",
+    points:
+      "1382,574 1400,528 1430,480 1470,432 1515,400 1550,438 " +
+      "1576,565 1562,704 1522,836 1454,924 1369,950 1332,914 " +
+      "1314,868 1309,800 1313,726 1327,658 1340,604 1360,566",
+  },
+};
+
+const Q19_PART_DEFS = [
+  { id: "lid", label: "플라스틱 뚜껑", correctBin: "plastic" },
+  { id: "bottom", label: "알루미늄 바닥", correctBin: "metal" },
+  { id: "body_print", label: "겉 인쇄 코팅면", correctBin: "general" },
+  { id: "body_paper", label: "종이 부분", correctBin: "paper" },
+  { id: "body_foil", label: "은박 코팅 부분", correctBin: "general" },
+];
+
+const Q19_LAYER_BASE = [
+  {
+    id: "body_print",
+    label: "겉 인쇄 코팅면",
+    correctBin: "general",
+    pieceImage: "/images/piece_q19_print.png",
+    className: "q19-print-piece",
+    hit: Q19_BODY_HIT,
+  },
+  {
+    id: "lid",
+    label: "플라스틱 뚜껑",
+    correctBin: "plastic",
+    pieceImage: "/images/piece_q19_lid.png",
+    className: "q19-lid-piece",
+    hit: Q19_LID_HIT,
+  },
+];
+
+const Q19_PAPER_LAYER = {
+  id: "body_paper",
+  label: "종이 부분",
+  correctBin: "paper",
+  pieceImage: "/images/piece_q19_paper.png",
+  className: "q19-paper-piece",
+  hit: Q19_BODY_HIT,
+};
+
+const Q19_FOIL_LAYER = {
+  id: "body_foil",
+  label: "은박 코팅 부분",
+  correctBin: "general",
+  pieceImage: "/images/piece_q19_foil.png",
+  className: "q19-foil-piece",
+  hit: Q19_BODY_HIT,
+};
+
+function getQ19BottomPiece(selectedParts) {
+  const paperRemoved = !!selectedParts.body_paper?.selectedBin;
+
+  return {
+    id: "bottom",
+    label: "알루미늄 바닥",
+    correctBin: "metal",
+    pieceImage: paperRemoved
+      ? "/images/piece_q19_bottom.png"
+      : "/images/piece_cylinder_bottom.png",
+    className: paperRemoved
+      ? "q19-bottom-piece q19-bottom-detached-piece"
+      : "q19-bottom-piece",
+    hit: paperRemoved ? Q19_BOTTOM_DETACHED_HIT : Q19_BOTTOM_ATTACHED_HIT,
+  };
+}
+
+function getQ19BaseImage(selectedParts) {
+  if (selectedParts.body_paper?.selectedBin) {
+    return "/images/q19_foil.png";
+  }
+
+  if (selectedParts.body_print?.selectedBin) {
+    return "/images/q19_paper.png";
+  }
+
+  return "/images/q19_print.png";
+}
+
+const GAME_ITEMS = [
+  {
+    id: "q16_game_pouch",
+    name: "봉지형 포장 과자",
+    image: "/images/game_pouch.png",
+    hotspots: [
+      {
+        ...POUCH_HOTSPOTS[0],
+        pieceImage: "/images/game_pouch.png",
+      },
+    ],
+    layeredPieces: [
+      {
+        id: "pouch",
+        label: "포장 전체",
+        correctBin: "vinyl",
+        pieceImage: "/images/game_pouch.png",
+        className: "pouch-piece",
+      },
+    ],
+  },
+  {
+    id: "q17_game_box",
+    name: "상자형 포장 과자",
+    image: "/images/game_box.png",
+    hotspots: BOX_HOTSPOTS,
+    layeredPieces: [
+      {
+        id: "outer_box",
+        label: "상자",
+        correctBin: "paper",
+        pieceImage: "/images/piece_box_outer.png",
+        className: "box-outer-piece",
+      },
+      {
+        id: "inner_pack",
+        label: "속포장",
+        correctBin: "vinyl",
+        pieceImage: "/images/piece_box_inner.png",
+        className: "box-inner-piece",
+      },
+    ],
+  },
+  {
+    id: "q18_game_cylinder",
+    name: "원통형 포장 과자",
+    image: "/images/game_cylinder.png",
+    viewBox: PRINGLES_VIEWBOX,
+    hotspots: PRINGLES_HOTSPOTS,
+    maskGame: true,
+  },
+];
+
+
+const GAME_TOTAL_MAX_SCORE = GAME_ITEMS.reduce(
+  (sum, item) => sum + item.hotspots.length,
+  0
+);
+
+function getBinLabel(binId) {
+  const bin = BINS.find((item) => item.id === binId);
+  return bin ? bin.label : binId;
+}
+
+function makeRespondentNo() {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const dd = String(now.getDate()).padStart(2, "0");
+  const hh = String(now.getHours()).padStart(2, "0");
+  const mi = String(now.getMinutes()).padStart(2, "0");
+  const ss = String(now.getSeconds()).padStart(2, "0");
+  const random = Math.random().toString(36).slice(2, 6).toUpperCase();
+
+  return `R-${yyyy}${mm}${dd}-${hh}${mi}${ss}-${random}`;
+}
+
+function createInitialGame() {
+  return {
+    currentIndex: 0,
+    modes: {},
+    selectedParts: {},
+    logs: [],
+    score: 0,
+    maxScore: 0,
+  };
+}
+
+function createInitialSurvey() {
+  return {
+    respondentNo: makeRespondentNo(),
+    grade: "",
+    gender: "",
+    preSurvey: {},
+    experience: {
+      q15_pouch: "",
+      q15_box: "",
+      q15_cylinder: "",
+    },
+    afterGame: {
+      q18: "",
+      q19: "",
+    },
+    postSurvey: {
+      q20: "",
+      q21: [],
+    },
+    video: {
+      watched: false,
+      watchedAt: "",
+    },
+    q19Quiz: {
+      selectedParts: {},
+      logs: [],
+      score: 0,
+      maxScore: 0,
+      percent: 0,
+      allCorrect: false,
+      selectedSummary: "",
+      finalImageStage: "print",
+      finalized: false,
+    },
+    game: createInitialGame(),
+  };
+}
+
+function normalizeSurvey(survey) {
+  const base = createInitialSurvey();
+
+  return {
+    ...base,
+    ...survey,
+    preSurvey: survey?.preSurvey || {},
+    experience: {
+      ...base.experience,
+      ...(survey?.experience || {}),
+    },
+    afterGame: {
+      ...base.afterGame,
+      ...(survey?.afterGame || {}),
+    },
+    postSurvey: {
+      ...base.postSurvey,
+      ...(survey?.postSurvey || {}),
+    },
+    video: {
+      ...base.video,
+      ...(survey?.video || {}),
+    },
+    q19Quiz: {
+      ...base.q19Quiz,
+      ...(survey?.q19Quiz || {}),
+      selectedParts: survey?.q19Quiz?.selectedParts || {},
+      logs: survey?.q19Quiz?.logs || [],
+    },
+    game: {
+      ...base.game,
+      ...(survey?.game || {}),
+      modes: survey?.game?.modes || {},
+      selectedParts: survey?.game?.selectedParts || {},
+      logs: survey?.game?.logs || [],
+    },
+  };
+}
+
+function loadSavedDraft() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+
+  if (!raw) {
+    return {
+      step: "intro",
+      preIndex: 0,
+      survey: createInitialSurvey(),
+    };
+  }
+
+  try {
+    const saved = JSON.parse(raw);
+
+    return {
+      step: saved.step || "intro",
+      preIndex: saved.preIndex || 0,
+      survey: normalizeSurvey(saved.survey || createInitialSurvey()),
+    };
+  } catch {
+    localStorage.removeItem(STORAGE_KEY);
+
+    return {
+      step: "intro",
+      preIndex: 0,
+      survey: createInitialSurvey(),
+    };
+  }
+}
+
+export default function App() {
+  const savedDraft = loadSavedDraft();
+
+  const [step, setStep] = useState(savedDraft.step);
+  const [survey, setSurvey] = useState(savedDraft.survey);
+  const [preIndex, setPreIndex] = useState(savedDraft.preIndex);
+  const [binModal, setBinModal] = useState(null);
+
+  useEffect(() => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        step,
+        preIndex,
+        survey,
+      })
+    );
+  }, [step, preIndex, survey]);
+
+  function updateBasic(field, value) {
+    setSurvey((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  }
+
+  function updatePre(questionId, value) {
+    setSurvey((prev) => ({
+      ...prev,
+      preSurvey: {
+        ...prev.preSurvey,
+        [questionId]: value,
+      },
+    }));
+  }
+
+  function togglePreReason(reasonId, value) {
+    setSurvey((prev) => {
+      const current = prev.preSurvey[reasonId] || [];
+      const next = current.includes(value)
+        ? current.filter((item) => item !== value)
+        : [...current, value];
+
+      return {
+        ...prev,
+        preSurvey: {
+          ...prev.preSurvey,
+          [reasonId]: next,
+        },
+      };
+    });
+  }
+
+  function updateExperience(field, value) {
+    setSurvey((prev) => ({
+      ...prev,
+      experience: {
+        ...prev.experience,
+        [field]: value,
+      },
+    }));
+  }
+
+  function updateAfterGame(field, value) {
+    setSurvey((prev) => ({
+      ...prev,
+      afterGame: {
+        ...prev.afterGame,
+        [field]: value,
+      },
+    }));
+  }
+
+  function updatePost(field, value) {
+    setSurvey((prev) => ({
+      ...prev,
+      postSurvey: {
+        ...prev.postSurvey,
+        [field]: value,
+      },
+    }));
+  }
+
+  function togglePostReason(value) {
+    setSurvey((prev) => {
+      const current = prev.postSurvey.q21 || [];
+      const next = current.includes(value)
+        ? current.filter((item) => item !== value)
+        : [...current, value];
+
+      return {
+        ...prev,
+        postSurvey: {
+          ...prev.postSurvey,
+          q21: next,
+        },
+      };
+    });
+  }
+
+  function startSurvey() {
+    if (!survey.grade || !survey.gender) {
+      alert("학년과 성별을 선택하세요.");
+      return;
+    }
+
+    setStep("preference");
+  }
+
+  function nextPre() {
+    const item = PACKAGING_ITEMS[preIndex];
+    const choice = survey.preSurvey[item.id];
+    const reasons = survey.preSurvey[item.reasonId] || [];
+
+    if (!choice) {
+      alert("선택 문항에 응답하세요.");
+      return;
+    }
+
+    if (reasons.length === 0) {
+      alert("선택 이유를 1개 이상 고르세요.");
+      return;
+    }
+
+    if (preIndex < PACKAGING_ITEMS.length - 1) {
+      setPreIndex(preIndex + 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    setStep("experience");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function prevPre() {
+    if (preIndex > 0) {
+      setPreIndex(preIndex - 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }
+
+  function finishExperience() {
+    const { q15_pouch, q15_box, q15_cylinder } = survey.experience;
+
+    if (!q15_pouch || !q15_box || !q15_cylinder) {
+      alert("봉지형, 상자형, 원통형 포장 이용 경험에 모두 응답하세요.");
+      return;
+    }
+
+    setStep("game");
+  }
+
+  function chooseGameMode(mode) {
+    const item = GAME_ITEMS[survey.game.currentIndex];
+
+    setSurvey((prev) => {
+      const currentParts = {
+        ...(prev.game.selectedParts[item.id] || {}),
+      };
+
+      if (mode === "no_separation") {
+        item.hotspots.forEach((part) => {
+          delete currentParts[part.id];
+        });
+      } else {
+        delete currentParts.__whole_package;
+      }
+
+      return {
+        ...prev,
+        game: {
+          ...prev.game,
+          modes: {
+            ...prev.game.modes,
+            [item.id]: mode,
+          },
+          selectedParts: {
+            ...prev.game.selectedParts,
+            [item.id]: currentParts,
+          },
+        },
+      };
+    });
+  }
+
+  function tapGamePart(partId) {
+    const item = GAME_ITEMS[survey.game.currentIndex];
+    const mode = survey.game.modes[item.id];
+
+    if (mode !== "separate") {
+      alert("먼저 ‘분리할 부분 없음 또는 있음’을 선택하세요.");
+      return;
+    }
+
+    setSurvey((prev) => {
+      const itemParts = {
+        ...(prev.game.selectedParts[item.id] || {}),
+      };
+
+      if (!itemParts[partId]) {
+        itemParts[partId] = {
+          selectedBin: "",
+          selectedBinLabel: "",
+          selectedAt: new Date().toISOString(),
+        };
+      }
+
+      return {
+        ...prev,
+        game: {
+          ...prev.game,
+          selectedParts: {
+            ...prev.game.selectedParts,
+            [item.id]: itemParts,
+          },
+        },
+      };
+    });
+  }
+
+  function assignGamePartBin(partId, binId) {
+    const item = GAME_ITEMS[survey.game.currentIndex];
+
+    setSurvey((prev) => {
+      const itemParts = {
+        ...(prev.game.selectedParts[item.id] || {}),
+      };
+
+      itemParts[partId] = {
+        ...(itemParts[partId] || {}),
+        selectedBin: binId,
+        selectedBinLabel: getBinLabel(binId),
+        selectedAt: new Date().toISOString(),
+      };
+
+      return {
+        ...prev,
+        game: {
+          ...prev.game,
+          selectedParts: {
+            ...prev.game.selectedParts,
+            [item.id]: itemParts,
+          },
+        },
+      };
+    });
+  }
+
+  function clearGamePartBin(partId) {
+    const item = GAME_ITEMS[survey.game.currentIndex];
+
+    setSurvey((prev) => {
+      const itemParts = {
+        ...(prev.game.selectedParts[item.id] || {}),
+      };
+
+      if (partId === "__whole_package") {
+        delete itemParts.__whole_package;
+      } else if (itemParts[partId]) {
+        itemParts[partId] = {
+          ...itemParts[partId],
+          selectedBin: "",
+          selectedBinLabel: "",
+          selectedAt: new Date().toISOString(),
+        };
+      }
+
+      return {
+        ...prev,
+        game: {
+          ...prev.game,
+          selectedParts: {
+            ...prev.game.selectedParts,
+            [item.id]: itemParts,
+          },
+        },
+      };
+    });
+  }
+
+  function chooseBin(binId) {
+    if (!binModal) return;
+
+    if (binModal.type === "q19") {
+      setSurvey((prev) => ({
+        ...prev,
+        q19Quiz: {
+          ...prev.q19Quiz,
+          selectedParts: {
+            ...prev.q19Quiz.selectedParts,
+            [binModal.partId]: {
+              selectedBin: binId,
+              selectedBinLabel: getBinLabel(binId),
+              selectedAt: new Date().toISOString(),
+            },
+          },
+        },
+      }));
+
+      setBinModal(null);
+      return;
+    }
+
+    setBinModal(null);
+  }
+
+  function finishCurrentGameItem() {
+
+    const item = GAME_ITEMS[survey.game.currentIndex];
+    const mode = survey.game.modes[item.id] || "";
+    const selectedMap = survey.game.selectedParts[item.id] || {};
+
+    if (!mode) {
+      alert("먼저 ‘분리할 부분 없음’ 또는 ‘분리할 부분 있음’을 선택하세요.");
+      return;
+    }
+
+    if (mode === "no_separation") {
+      const wholeAnswer = selectedMap.__whole_package;
+
+      if (!wholeAnswer) {
+        alert("포장 전체를 어디에 버릴지 선택하세요.");
+        return;
+      }
+
+      if (item.id === "q16_game_pouch") {
+        const correctBin = item.hotspots[0].correctBin;
+        const isCorrect = wholeAnswer.selectedBin === correctBin;
+        const log = {
+          stage: "pre_video_game",
+          selectionStatus: "whole_package_no_separation",
+          gameItemId: item.id,
+          gameItemName: item.name,
+          targetPartId: "whole_package",
+          targetPartLabel: "포장 전체",
+          selectedBin: wholeAnswer.selectedBin,
+          selectedBinLabel: wholeAnswer.selectedBinLabel,
+          correctBin,
+          correctBinLabel: getBinLabel(correctBin),
+          isCorrect,
+          eventTime: wholeAnswer.selectedAt,
+        };
+
+        moveToNextGameItem([log], isCorrect ? 1 : 0, 1);
+        return;
+      }
+
+      const logs = item.hotspots.map((part) => ({
+        stage: "pre_video_game",
+        selectionStatus: "whole_package_no_separation",
+        gameItemId: item.id,
+        gameItemName: item.name,
+        targetPartId: part.id,
+        targetPartLabel: part.label,
+        selectedBin: wholeAnswer.selectedBin,
+        selectedBinLabel: wholeAnswer.selectedBinLabel,
+        correctBin: part.correctBin,
+        correctBinLabel: getBinLabel(part.correctBin),
+        isCorrect: false,
+        eventTime: wholeAnswer.selectedAt,
+      }));
+
+      moveToNextGameItem(logs, 0, item.hotspots.length);
+      return;
+    }
+
+    const selectedPartCount = Object.keys(selectedMap).filter(
+      (key) => !key.startsWith("__")
+    ).length;
+
+    if (selectedPartCount === 0) {
+      alert("분리할 부분이 있다고 선택한 경우, 이미지에서 분리할 부분을 최소 1개 이상 터치하세요.");
+      return;
+    }
+
+    const unassignedPart = item.hotspots.find((part) => selectedMap[part.id] && !selectedMap[part.id].selectedBin);
+
+    if (unassignedPart) {
+      alert("선택한 조각을 배출함으로 끌어다 놓거나, 조각을 선택한 뒤 배출함을 눌러 주세요.");
+      return;
+    }
+
+    let addScore = 0;
+    const addMaxScore = item.hotspots.length;
+
+    const logs = item.hotspots.map((part) => {
+      const answer = selectedMap[part.id] || null;
+      const isSelected = answer !== null;
+      const isCorrect = isSelected && answer.selectedBin === part.correctBin;
+
+      if (isCorrect) {
+        addScore += 1;
+      }
+
+      return {
+        stage: "pre_video_game",
+        selectionStatus: isSelected ? "selected" : "not_selected",
+        gameItemId: item.id,
+        gameItemName: item.name,
+        targetPartId: part.id,
+        targetPartLabel: part.label,
+        selectedBin: isSelected ? answer.selectedBin : "",
+        selectedBinLabel: isSelected ? answer.selectedBinLabel : "",
+        correctBin: part.correctBin,
+        correctBinLabel: getBinLabel(part.correctBin),
+        isCorrect,
+        eventTime: isSelected ? answer.selectedAt : new Date().toISOString(),
+      };
+    });
+
+    moveToNextGameItem(logs, addScore, addMaxScore);
+  }
+
+  function moveToNextGameItem(logs, addScore, addMaxScore) {
+    const isLastGameItem = survey.game.currentIndex >= GAME_ITEMS.length - 1;
+
+    setSurvey((prev) => ({
+      ...prev,
+      game: {
+        ...prev.game,
+        currentIndex: isLastGameItem
+          ? prev.game.currentIndex
+          : prev.game.currentIndex + 1,
+        logs: [...prev.game.logs, ...logs],
+        score: prev.game.score + addScore,
+        maxScore: prev.game.maxScore + addMaxScore,
+      },
+    }));
+
+    if (isLastGameItem) {
+      setStep("afterGame");
+    }
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function finishAfterGame() {
+    if (!survey.afterGame.q18 || !survey.afterGame.q19) {
+      alert("18번과 19번 문항에 모두 응답하세요.");
+      return;
+    }
+
+    setStep("scoreReveal");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function goToVideoFromScore() {
+    setStep("video");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function goToPostFromQ19Score() {
+    setStep("post");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function finishVideo() {
+    setSurvey((prev) => ({
+      ...prev,
+      video: {
+        watched: true,
+        watchedAt: new Date().toISOString(),
+      },
+    }));
+
+    setStep("quiz");
+  }
+
+  function getQ19StageKey(selectedParts = survey.q19Quiz.selectedParts) {
+    if (selectedParts.body_foil?.selectedBin) {
+      return "은박 처리 후";
+    }
+
+    if (selectedParts.body_paper?.selectedBin) {
+      return "은박 표시";
+    }
+
+    if (selectedParts.body_print?.selectedBin) {
+      return "종이 표시";
+    }
+
+    return "초기 전체 이미지";
+  }
+
+  function tapQ19Part(partId) {
+    setBinModal({
+      type: "q19",
+      partId,
+      title: "선택한 부분은 어디에 버려야 할까요?",
+      desc: "방금 터치한 부분에 알맞은 배출함을 선택하세요.",
+    });
+  }
+
+  function assignQ19PartBin(partId, binId) {
+    setSurvey((prev) => ({
+      ...prev,
+      q19Quiz: {
+        ...prev.q19Quiz,
+        selectedParts: {
+          ...prev.q19Quiz.selectedParts,
+          [partId]: {
+            selectedBin: binId,
+            selectedBinLabel: getBinLabel(binId),
+            selectedAt: new Date().toISOString(),
+          },
+        },
+      },
+    }));
+  }
+
+  function clearQ19PartBin(partId) {
+    setSurvey((prev) => {
+      const selectedParts = {
+        ...prev.q19Quiz.selectedParts,
+      };
+
+      delete selectedParts[partId];
+
+      if (partId === "body_print") {
+        delete selectedParts.body_paper;
+        delete selectedParts.body_foil;
+      }
+
+      if (partId === "body_paper") {
+        delete selectedParts.body_foil;
+      }
+
+      return {
+        ...prev,
+        q19Quiz: {
+          ...prev.q19Quiz,
+          selectedParts,
+        },
+      };
+    });
+  }
+
+  function finishQ19Quiz() {
+    const selectedParts = survey.q19Quiz.selectedParts;
+
+    if (Object.keys(selectedParts).length === 0) {
+      alert("터치형 퀴즈에서 최소 1개 이상 선택하세요.");
+      return;
+    }
+
+    let score = 0;
+    const maxScore = Q19_PART_DEFS.length;
+    const finalStage = getQ19StageKey(selectedParts);
+
+    const logs = Q19_PART_DEFS.map((part) => {
+      const answer = selectedParts[part.id] || null;
+      const isSelected = answer !== null;
+      const isCorrect = isSelected && answer.selectedBin === part.correctBin;
+
+      if (isCorrect) {
+        score += 1;
+      }
+
+      return {
+        stage: "post_video_q19_touch_quiz",
+        selectionStatus: isSelected ? "selected" : "not_selected",
+        imageStageAtFinish: finalStage,
+        gameItemId: "q19_touch_quiz",
+        gameItemName: "원통형 포장 터치형 퀴즈",
+        targetPartId: part.id,
+        targetPartLabel: part.label,
+        selectedBin: isSelected ? answer.selectedBin : "",
+        selectedBinLabel: isSelected ? answer.selectedBinLabel : "",
+        correctBin: part.correctBin,
+        correctBinLabel: getBinLabel(part.correctBin),
+        isCorrect,
+        eventTime: isSelected ? answer.selectedAt : new Date().toISOString(),
+      };
+    });
+
+    const percent =
+      maxScore > 0 ? Math.round((score / maxScore) * 1000) / 10 : 0;
+
+    const selectedSummary = Q19_PART_DEFS.filter((part) => selectedParts[part.id])
+      .map((part) => `${part.label}→${selectedParts[part.id].selectedBinLabel}`)
+      .join(", ");
+
+    setSurvey((prev) => ({
+      ...prev,
+      q19Quiz: {
+        selectedParts,
+        logs,
+        score,
+        maxScore,
+        percent,
+        allCorrect: score === maxScore,
+        selectedSummary,
+        finalImageStage: finalStage,
+        finalized: true,
+      },
+    }));
+
+    setStep("q19ScoreReveal");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function finishPostSurvey() {
+    if (!survey.q19Quiz.finalized) {
+      alert("영상 후 터치형 퀴즈를 먼저 완료하세요.");
+      return;
+    }
+
+    if (!survey.postSurvey.q20) {
+      alert("구매의향 문항에 응답하세요.");
+      return;
+    }
+
+    if (survey.postSurvey.q21.length === 0) {
+      alert("구매의향 이유를 1개 이상 선택하세요.");
+      return;
+    }
+
+    console.log("최종 제출 데이터", survey);
+    alert("현재는 Supabase 연결 전입니다. 콘솔에 데이터가 출력되었습니다.");
+    setStep("done");
+  }
+
+  function resetDraft() {
+    const ok = confirm("임시 저장된 응답을 모두 지울까요?");
+
+    if (!ok) return;
+
+    const freshSurvey = createInitialSurvey();
+
+    localStorage.removeItem(STORAGE_KEY);
+    setSurvey(freshSurvey);
+    setStep("intro");
+    setPreIndex(0);
+    setBinModal(null);
+  }
+
+  return (
+    <main className="app">
+      <section className="card">
+        {step === "intro" && (
+          <>
+            <h1>원통형 포장에 대한 편의성·환경성 인식과 구매 태도 조사</h1>
+
+            <p className="desc">
+              과자 포장 유형에 대한 선호도, 포장 형태별 이용 경험,
+              분리배출 판단, 영상 시청 후 구매의향을 알아보기 위한 조사입니다.
+            </p>
+
+            <div className="respondent-box">
+              <strong>자동 생성된 응답자 번호</strong>
+              <p>{survey.respondentNo}</p>
+            </div>
+
+            <label className="field">
+              학년
+              <select
+                value={survey.grade}
+                onChange={(e) => updateBasic("grade", e.target.value)}
+              >
+                <option value="">선택</option>
+                <option value="1학년">1학년</option>
+                <option value="2학년">2학년</option>
+                <option value="3학년">3학년</option>
+              </select>
+            </label>
+
+            <label className="field">
+              성별
+              <select
+                value={survey.gender}
+                onChange={(e) => updateBasic("gender", e.target.value)}
+              >
+                <option value="">선택</option>
+                <option value="남자">남자</option>
+                <option value="여자">여자</option>
+              </select>
+            </label>
+
+            <button type="button" onClick={startSurvey}>
+              설문 시작
+            </button>
+
+            <button type="button" className="secondary" onClick={resetDraft}>
+              임시 저장값 지우기
+            </button>
+          </>
+        )}
+
+        {step === "preference" && (
+          <PreferenceStep
+            item={PACKAGING_ITEMS[preIndex]}
+            index={preIndex}
+            total={PACKAGING_ITEMS.length}
+            survey={survey}
+            updatePre={updatePre}
+            togglePreReason={togglePreReason}
+            prevPre={prevPre}
+            nextPre={nextPre}
+          />
+        )}
+
+        {step === "experience" && (
+          <ExperienceStep
+            survey={survey}
+            updateExperience={updateExperience}
+            finishExperience={finishExperience}
+          />
+        )}
+
+        {step === "game" && (
+          <GameStep
+            game={survey.game}
+            chooseGameMode={chooseGameMode}
+            tapGamePart={tapGamePart}
+            assignGamePartBin={assignGamePartBin}
+            clearGamePartBin={clearGamePartBin}
+            finishCurrentGameItem={finishCurrentGameItem}
+          />
+        )}
+
+        {step === "afterGame" && (
+          <AfterGameStep
+            survey={survey}
+            updateAfterGame={updateAfterGame}
+            finishAfterGame={finishAfterGame}
+          />
+        )}
+
+        {step === "scoreReveal" && (
+          <ScoreRevealStep game={survey.game} goToVideoFromScore={goToVideoFromScore} />
+        )}
+
+        {step === "video" && (
+          <VideoStep finishVideo={finishVideo} />
+        )}
+
+        {step === "quiz" && (
+          <Q19QuizStep
+            q19Quiz={survey.q19Quiz}
+            getQ19StageKey={getQ19StageKey}
+            assignQ19PartBin={assignQ19PartBin}
+            clearQ19PartBin={clearQ19PartBin}
+            finishQ19Quiz={finishQ19Quiz}
+          />
+        )}
+
+        {step === "q19ScoreReveal" && (
+          <Q19ScoreRevealStep
+            q19Quiz={survey.q19Quiz}
+            goToPostFromQ19Score={goToPostFromQ19Score}
+          />
+        )}
+
+        {step === "post" && (
+          <PostSurveyStep
+            survey={survey}
+            updatePost={updatePost}
+            togglePostReason={togglePostReason}
+            finishPostSurvey={finishPostSurvey}
+          />
+        )}
+
+        {step === "done" && (
+          <>
+            <h2>제출 테스트 완료</h2>
+            <p className="desc">
+              현재는 Supabase 연결 전이라 실제 서버에는 저장되지 않았습니다.
+              제출 데이터는 브라우저 콘솔에 출력되었습니다.
+            </p>
+
+            <button type="button" className="secondary" onClick={resetDraft}>
+              새 응답 시작
+            </button>
+          </>
+        )}
+      </section>
+
+      {binModal && (
+        <BinModal
+          title={binModal.title}
+          desc={binModal.desc}
+          chooseBin={chooseBin}
+          close={() => setBinModal(null)}
+        />
+      )}
+    </main>
+  );
+}
+
+function PreferenceStep({
+  item,
+  index,
+  total,
+  survey,
+  updatePre,
+  togglePreReason,
+  prevPre,
+  nextPre,
+}) {
+  const choice = survey.preSurvey[item.id] || "";
+  const reasons = survey.preSurvey[item.reasonId] || [];
+
+  return (
+    <>
+      <h2>2단계. 포장 선호도 조사</h2>
+
+      <div className="status">
+        문항 {index + 1} / {total}
+      </div>
+
+      <div className="question">
+        <h3>
+          {item.id.replace("q", "")}. {item.title}
+        </h3>
+
+        {item.image && (
+          <div className="image-box">
+            <img src={item.image} alt={`${item.id} 문항 이미지`} />
+          </div>
+        )}
+
+        <div className="options">
+          {item.options.map((option) => (
+            <label key={option}>
+              <input
+                type="radio"
+                name={item.id}
+                checked={choice === option}
+                onChange={() => updatePre(item.id, option)}
+              />
+              {option}
+            </label>
+          ))}
+        </div>
+
+        <h3>
+          {item.reasonId.replace("q", "")}. 그렇게 선택한 이유는
+          무엇입니까?
+        </h3>
+
+        <div className="options">
+          {REASONS.map((reason) => (
+            <label key={reason}>
+              <input
+                type="checkbox"
+                checked={reasons.includes(reason)}
+                onChange={() => togglePreReason(item.reasonId, reason)}
+              />
+              {reason}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="button-row">
+        <button type="button" className="secondary" onClick={prevPre}>
+          이전
+        </button>
+        <button type="button" onClick={nextPre}>
+          {index === total - 1 ? "이용 경험 문항으로 이동" : "다음"}
+        </button>
+      </div>
+    </>
+  );
+}
+
+function ExperienceStep({ survey, updateExperience, finishExperience }) {
+  return (
+    <>
+      <h2>3단계. 포장 형태별 과자 이용 경험</h2>
+
+      <p className="desc">
+        최근 한 달 동안 아래 포장 형태의 과자를 구입하거나 먹은 경험을 선택하세요.
+      </p>
+
+      <FrequencyQuestion
+        title="15-1. 봉지형 포장"
+        name="q15_pouch"
+        value={survey.experience.q15_pouch}
+        onChange={(value) => updateExperience("q15_pouch", value)}
+      />
+
+      <FrequencyQuestion
+        title="15-2. 상자형 포장"
+        name="q15_box"
+        value={survey.experience.q15_box}
+        onChange={(value) => updateExperience("q15_box", value)}
+      />
+
+      <FrequencyQuestion
+        title="15-3. 원통형 포장"
+        name="q15_cylinder"
+        value={survey.experience.q15_cylinder}
+        onChange={(value) => updateExperience("q15_cylinder", value)}
+      />
+
+      <button type="button" onClick={finishExperience}>
+        분리배출 게임으로 이동
+      </button>
+    </>
+  );
+}
+
+function FrequencyQuestion({ title, name, value, onChange }) {
+  return (
+    <div className="question">
+      <h3>{title}</h3>
+
+      <div className="options">
+        {FREQUENCY_OPTIONS.map((option) => (
+          <label key={option}>
+            <input
+              type="radio"
+              name={name}
+              checked={value === option}
+              onChange={() => onChange(option)}
+            />
+            {option}
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function GameStep({
+  game,
+  chooseGameMode,
+  tapGamePart,
+  assignGamePartBin,
+  clearGamePartBin,
+  finishCurrentGameItem,
+}) {
+  const item = GAME_ITEMS[game.currentIndex];
+  const [activePieceId, setActivePieceId] = useState("");
+  const [draggingPieceId, setDraggingPieceId] = useState("");
+  const [dragPreview, setDragPreview] = useState(null);
+
+  const mode = item ? game.modes[item.id] || "" : "";
+  const selectedMap = item ? game.selectedParts[item.id] || {} : {};
+  const isLayeredPieceGame = !!item && mode === "separate" && item.layeredPieces;
+  const isMaskedPieceGame = !!item && mode === "separate" && item.maskGame;
+
+  useEffect(() => {
+    if (!item) return;
+
+    setActivePieceId(mode === "no_separation" ? "__whole_package" : "");
+    setDraggingPieceId("");
+    setDragPreview(null);
+  }, [item?.id, mode]);
+
+  if (!item) {
+    return null;
+  }
+
+  const selectedPieces =
+    mode === "no_separation"
+      ? [
+          {
+            id: "__whole_package",
+            label: "포장 전체",
+            pieceImage: item.image,
+          },
+        ]
+      : isLayeredPieceGame
+        ? item.layeredPieces.filter(
+            (piece) => !selectedMap[piece.id]?.selectedBin
+          )
+        : isMaskedPieceGame
+          ? item.hotspots.filter((part) => !selectedMap[part.id]?.selectedBin)
+          : item.hotspots.filter((part) => selectedMap[part.id]);
+
+  const selectedPartsSummary =
+    mode === "no_separation"
+      ? selectedMap.__whole_package?.selectedBinLabel
+        ? [
+            {
+              partId: "__whole_package",
+              partLabel: "포장 전체",
+              binLabel: selectedMap.__whole_package.selectedBinLabel,
+            },
+          ]
+        : []
+      : item.hotspots
+          .filter((part) => selectedMap[part.id]?.selectedBinLabel)
+          .map((part) => {
+            const answer = selectedMap[part.id];
+
+            return {
+              partId: part.id,
+              partLabel: part.label,
+              binLabel: answer.selectedBinLabel,
+            };
+          });
+
+  function getDragPiece(partId) {
+    if (!item) return null;
+
+    if (partId === "__whole_package") {
+      return {
+        id: "__whole_package",
+        label: "포장 전체",
+        pieceImage: item.image,
+      };
+    }
+
+    return (
+      item.hotspots.find((part) => part.id === partId) ||
+      item.layeredPieces?.find((part) => part.id === partId) ||
+      null
+    );
+  }
+
+  function startDragPiece(partId, event) {
+    const piece = getDragPiece(partId);
+
+    setDraggingPieceId(partId);
+    setActivePieceId(partId);
+
+    if (piece) {
+      setDragPreview({
+        id: partId,
+        label: piece.label,
+        pieceImage: piece.pieceImage || item.image,
+        x: event?.clientX || 0,
+        y: event?.clientY || 0,
+      });
+    }
+  }
+
+  function handleDropOnBin(binId, partId) {
+    if (!partId) return;
+    assignGamePartBin(partId, binId);
+    setActivePieceId("");
+    setDraggingPieceId("");
+    setDragPreview(null);
+  }
+
+  useEffect(() => {
+    if (!draggingPieceId) return;
+
+    function handlePointerMove(event) {
+      setDragPreview((prev) =>
+        prev
+          ? {
+              ...prev,
+              x: event.clientX,
+              y: event.clientY,
+            }
+          : prev
+      );
+    }
+
+    function handlePointerUp(event) {
+      const dropTarget = event.target.closest?.("[data-bin-id]");
+
+      if (dropTarget) {
+        handleDropOnBin(dropTarget.dataset.binId, draggingPieceId);
+        return;
+      }
+
+      setDraggingPieceId("");
+      setDragPreview(null);
+    }
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+    };
+  }, [draggingPieceId]);
+
+  return (
+    <>
+      <h2>4단계. 분리배출 게임</h2>
+
+      <p className="desc">
+        포장 이미지를 보고, 버릴 때 어떻게 처리할지 선택하세요.
+        분리할 부분이 없다고 생각하면 ‘분리할 부분 없음’을 선택하세요.
+        분리할 부분이 있다고 생각하면 ‘분리할 부분 있음’을 선택한 뒤 이미지에서 해당 부분을 터치하세요.
+      </p>
+
+      <div className="status">
+        게임 {game.currentIndex + 1} / {GAME_ITEMS.length}
+      </div>
+
+      <div className="game-choice-buttons">
+        <button type="button" onClick={() => chooseGameMode("no_separation")}>
+          분리할 부분 없음
+        </button>
+        <button type="button" onClick={() => chooseGameMode("separate")}>
+          분리할 부분 있음
+        </button>
+      </div>
+
+      <h3>{item.name}</h3>
+
+      {mode === "no_separation" ? (
+        <WholePackageImage
+          item={item}
+          selected={activePieceId === "__whole_package"}
+          removed={!!selectedMap.__whole_package?.selectedBin}
+          onSelect={() => setActivePieceId("__whole_package")}
+          onDragStart={(event) => startDragPiece("__whole_package", event)}
+          onDragEnd={() => setDraggingPieceId("")}
+        />
+      ) : isMaskedPieceGame ? (
+        <MaskedGameImage
+          item={item}
+          selectedMap={selectedMap}
+          activePieceId={activePieceId}
+          onSelect={(partId) => setActivePieceId(partId)}
+          onDragStart={(partId, event) => startDragPiece(partId, event)}
+          onDragEnd={() => setDraggingPieceId("")}
+        />
+      ) : isLayeredPieceGame ? (
+        <div className="layer-game-box">
+          <div className="layer-stage">
+            {selectedPieces.map((piece) => (
+              <LayerPiece
+                key={piece.id}
+                piece={piece}
+                isActive={activePieceId === piece.id}
+                onSelect={() => setActivePieceId(piece.id)}
+                onDragStart={() => {
+                  setDraggingPieceId(piece.id);
+                  setActivePieceId(piece.id);
+                }}
+                onDragEnd={() => setDraggingPieceId("")}
+              />
+            ))}
+
+            {selectedPieces.length === 0 && (
+              <div className="layer-stage-empty">
+                모든 조각을 배출함으로 옮겼습니다.
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="image-box">
+          <HotspotImage
+            item={item}
+            selectedMap={selectedMap}
+            onTap={tapGamePart}
+          />
+        </div>
+      )}
+
+      {mode === "separate" && !isLayeredPieceGame && !isMaskedPieceGame && (
+        <>
+          <div className="piece-help">
+            이미지에서 분리할 부분을 터치하면 조각이 아래에 나타납니다.
+            조각을 배출함으로 끌어다 놓거나, 조각을 누른 뒤 배출함을 누르세요.
+          </div>
+
+          <div className="piece-zone">
+            {selectedPieces.length > 0 ? (
+              selectedPieces.map((part) => {
+                const answer = selectedMap[part.id] || null;
+
+                return (
+                  <PieceCard
+                    key={part.id}
+                    piece={part}
+                    isActive={activePieceId === part.id}
+                    selectedBinLabel={answer?.selectedBinLabel || ""}
+                    onSelect={() => setActivePieceId(part.id)}
+                    onDragStart={() => {
+                      setDraggingPieceId(part.id);
+                      setActivePieceId(part.id);
+                    }}
+                    onDragEnd={() => setDraggingPieceId("")}
+                  />
+                );
+              })
+            ) : (
+              <div className="piece-empty">
+                이미지에서 분리할 부분을 터치하면 여기 나타납니다.
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {mode && (
+        <>
+          <div className="bin-drop-grid">
+            {BINS.map((bin) => (
+              <div
+                key={bin.id}
+                data-bin-id={bin.id}
+                className="bin-drop-card"
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  const droppedId =
+                    event.dataTransfer.getData("text/plain") || draggingPieceId;
+                  handleDropOnBin(bin.id, droppedId);
+                }}
+                onClick={() => {
+                  if (activePieceId) {
+                    handleDropOnBin(bin.id, activePieceId);
+                  }
+                }}
+              >
+                <div className="bin-drop-icon">{bin.label}</div>
+                <div className="bin-drop-text">여기에 놓기 / 누르기</div>
+              </div>
+            ))}
+          </div>
+
+          {selectedPartsSummary.length > 0 && (
+            <GameSelectionSummary
+              items={selectedPartsSummary}
+              onReset={(partId) => {
+                clearGamePartBin(partId);
+                setActivePieceId(partId === "__whole_package" ? "__whole_package" : partId);
+              }}
+            />
+          )}
+
+          <button type="button" onClick={finishCurrentGameItem}>
+            다음으로
+          </button>
+        </>
+      )}
+
+      {dragPreview && <DragPreview preview={dragPreview} />}
+    </>
+  );
+}
+
+function PieceCard({
+  piece,
+  isActive,
+  selectedBinLabel,
+  onSelect,
+  onDragStart,
+  onDragEnd,
+}) {
+  const [imgError, setImgError] = useState(false);
+
+  return (
+    <div
+      className={isActive ? "piece-card active" : "piece-card"}
+      draggable
+      onClick={onSelect}
+      onDragStart={(event) => {
+        event.dataTransfer.setData("text/plain", piece.id);
+        onDragStart();
+      }}
+      onDragEnd={onDragEnd}
+    >
+      {piece.pieceImage && !imgError ? (
+        <img
+          src={piece.pieceImage}
+          alt={piece.label}
+          onError={() => setImgError(true)}
+        />
+      ) : (
+        <div className="piece-card-fallback">{piece.label}</div>
+      )}
+
+      <div className="piece-card-label">{piece.label}</div>
+      <div className="piece-card-bin">
+        {selectedBinLabel
+          ? `현재 배출함: ${selectedBinLabel}`
+          : "아직 배출함을 선택하지 않음"}
+      </div>
+    </div>
+  );
+}
+
+function DragPreview({ preview }) {
+  return (
+    <div
+      className="drag-preview"
+      style={{
+        left: `${preview.x}px`,
+        top: `${preview.y}px`,
+      }}
+    >
+      {preview.pieceImage ? (
+        <img src={preview.pieceImage} alt="" aria-hidden="true" />
+      ) : (
+        <div className="drag-preview-fallback">{preview.label}</div>
+      )}
+      <div>{preview.label}</div>
+    </div>
+  );
+}
+
+function WholePackageImage({
+  item,
+  selected,
+  removed,
+  onSelect,
+  onDragStart,
+  onDragEnd,
+}) {
+  return (
+    <div className="layer-game-box">
+      <div className="layer-stage whole-package-stage">
+        {removed ? (
+          <div className="layer-stage-empty">
+            포장 전체를 배출함으로 옮겼습니다.
+          </div>
+        ) : (
+          <img
+            className={selected ? "whole-package-image active" : "whole-package-image"}
+            src={item.image}
+            alt={`${item.name} 전체`}
+            draggable
+            onClick={onSelect}
+            onPointerDown={(event) => {
+              event.preventDefault();
+              onSelect();
+              onDragStart(event);
+            }}
+            onDragStart={(event) => {
+              event.dataTransfer.setData("text/plain", "__whole_package");
+              onDragStart(event);
+            }}
+            onDragEnd={onDragEnd}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MaskedGameImage({
+  item,
+  selectedMap,
+  activePieceId,
+  onSelect,
+  onDragStart,
+  onDragEnd,
+}) {
+  const removedParts = item.hotspots.filter((part) => selectedMap[part.id]?.selectedBin);
+  const selectableParts = item.hotspots.filter((part) => !selectedMap[part.id]?.selectedBin);
+
+  return (
+    <div className="layer-game-box">
+      <div className="layer-stage mask-game-stage">
+        <img
+          className="mask-game-base-image"
+          src={item.image}
+          alt={item.name}
+        />
+
+        <svg
+          className="mask-game-mask-svg"
+          viewBox={item.viewBox || "0 0 1000 1000"}
+          preserveAspectRatio="xMidYMid meet"
+          aria-hidden="true"
+        >
+          {removedParts
+            .sort((a, b) => (a.z || 0) - (b.z || 0))
+            .map((part) => (
+              <MaskShape key={`mask-${part.id}`} part={part} />
+            ))}
+        </svg>
+
+        <svg
+          className="mask-game-hit-svg"
+          viewBox={item.viewBox || "0 0 1000 1000"}
+          preserveAspectRatio="xMidYMid meet"
+        >
+          {selectableParts
+            .sort((a, b) => (a.z || 0) - (b.z || 0))
+            .map((part) => (
+              <MaskHitShape
+                key={`hit-${part.id}`}
+                part={part}
+                selected={activePieceId === part.id}
+                onSelect={() => onSelect(part.id)}
+                onDragStart={() => onDragStart(part.id)}
+                onDragEnd={onDragEnd}
+              />
+            ))}
+        </svg>
+
+        {selectableParts.length === 0 && (
+          <div className="layer-stage-empty">
+            모든 조각을 배출함으로 옮겼습니다.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MaskShape({ part }) {
+  if (part.svg.type === "polygon") {
+    return <polygon className="mask-game-mask-shape" points={part.svg.points} />;
+  }
+
+  if (part.svg.type === "path") {
+    return <path className="mask-game-mask-shape" d={part.svg.d} />;
+  }
+
+  return null;
+}
+
+function MaskHitShape({
+  part,
+  selected,
+  onSelect,
+  onDragStart,
+  onDragEnd,
+}) {
+  const className = selected ? "mask-game-hit-shape selected" : "mask-game-hit-shape";
+  const commonProps = {
+    className,
+    draggable: true,
+    onClick: onSelect,
+    onPointerDown: (event) => {
+      event.preventDefault();
+      onSelect();
+      onDragStart(event);
+    },
+    onDragStart: (event) => {
+      event.dataTransfer.setData("text/plain", part.id);
+      onDragStart(event);
+    },
+    onDragEnd,
+  };
+
+  if (part.svg.type === "polygon") {
+    return <polygon {...commonProps} points={part.svg.points} />;
+  }
+
+  if (part.svg.type === "path") {
+    return <path {...commonProps} d={part.svg.d} />;
+  }
+
+  return null;
+}
+
+function GameSelectionSummary({ items, onReset }) {
+  return (
+    <div className="game-summary-box">
+      <div className="game-summary-title">선택 내용</div>
+
+      <div className="game-summary-list">
+        {items.map((item, index) => (
+          <div className="game-summary-row" key={`${item.partLabel}-${index}`}>
+            <span className="game-summary-part">{item.partLabel}</span>
+            <span className="game-summary-arrow">→</span>
+            <span className="game-summary-bin">{item.binLabel}</span>
+            <button
+              type="button"
+              className="summary-reset-button"
+              onClick={() => onReset(item.partId)}
+            >
+              다시 선택
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LayerPiece({
+  piece,
+  isActive,
+  onSelect,
+  onDragStart,
+  onDragEnd,
+}) {
+  return (
+    <img
+      className={
+        isActive
+          ? `layer-piece ${piece.className || ""} active`
+          : `layer-piece ${piece.className || ""}`
+      }
+      src={piece.pieceImage}
+      alt={piece.label}
+      draggable
+      onClick={onSelect}
+      onDragStart={(event) => {
+        event.dataTransfer.setData("text/plain", piece.id);
+        onDragStart();
+      }}
+      onDragEnd={onDragEnd}
+    />
+  );
+}
+
+function HotspotImage({ item, selectedMap, onTap }) {
+  const hotspots = [...item.hotspots].sort((a, b) => (a.z || 0) - (b.z || 0));
+
+  return (
+    <div className="hotspot-wrap">
+      <img src={item.image} alt={item.name} />
+
+      <svg
+        className="hotspot-svg"
+        viewBox={item.viewBox || "0 0 1000 1000"}
+        preserveAspectRatio="xMidYMid meet"
+      >
+        {hotspots.map((part) => (
+          <HotspotShape
+            key={part.id}
+            part={part}
+            selected={!!selectedMap[part.id]}
+            onTap={onTap}
+          />
+        ))}
+      </svg>
+    </div>
+  );
+}
+
+function HotspotShape({ part, selected, onTap }) {
+  const className = selected ? "hotspot-shape selected" : "hotspot-shape";
+  const commonProps = {
+    className,
+    onClick: () => onTap(part.id),
+  };
+
+  if (part.svg.type === "polygon") {
+    return <polygon {...commonProps} points={part.svg.points} />;
+  }
+
+  if (part.svg.type === "path") {
+    return <path {...commonProps} d={part.svg.d} />;
+  }
+
+  return null;
+}
+
+function BinModal({ title, desc, chooseBin, close }) {
+  return (
+    <div className="bin-modal-backdrop">
+      <div className="bin-modal-card">
+        <h2>{title}</h2>
+        <p className="desc">{desc}</p>
+
+        <div className="bin-grid">
+          {BINS.map((bin) => (
+            <button key={bin.id} type="button" onClick={() => chooseBin(bin.id)}>
+              {bin.label}
+            </button>
+          ))}
+        </div>
+
+        <button type="button" className="secondary" onClick={close}>
+          취소
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function formatSelectedBinLabel(log) {
+  return log.selectedBinLabel || "선택 안 함";
+}
+
+function GameScoreSummary({ game }) {
+  const score = game?.score || 0;
+  const maxScore = game?.maxScore || GAME_TOTAL_MAX_SCORE;
+  const percent = maxScore > 0 ? Math.round((score / maxScore) * 1000) / 10 : 0;
+  const logs = game?.logs || [];
+  const correctLogs = logs.filter((log) => log.isCorrect);
+  const wrongLogs = logs.filter((log) => !log.isCorrect);
+
+  return (
+    <div className="score-box">
+      <div className="score-title">분리배출 게임 점수 공개</div>
+
+      <div className="score-headline">
+        <strong>{score}점</strong> / 만점 {maxScore}점
+      </div>
+      <div className="score-subline">정답률 {percent}%</div>
+
+      <div className="score-note">
+        만점 기준: 봉지형 1점 + 상자형 2점 + 원통형 3점 = 총 6점
+      </div>
+
+      <div className="score-section">
+        <div className="score-section-title">맞힌 것 ({correctLogs.length})</div>
+        {correctLogs.length > 0 ? (
+          <div className="score-list">
+            {correctLogs.map((log, index) => (
+              <div className="score-row correct" key={`correct-${index}`}>
+                <div className="score-item-main">
+                  {log.gameItemName} · {log.targetPartLabel}
+                </div>
+                <div className="score-item-sub">
+                  내 선택: {formatSelectedBinLabel(log)}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="score-empty">아직 맞힌 항목이 없습니다.</div>
+        )}
+      </div>
+
+      <div className="score-section">
+        <div className="score-section-title">틀린 것 ({wrongLogs.length})</div>
+        {wrongLogs.length > 0 ? (
+          <div className="score-list">
+            {wrongLogs.map((log, index) => (
+              <div className="score-row wrong" key={`wrong-${index}`}>
+                <div className="score-item-main">
+                  {log.gameItemName} · {log.targetPartLabel}
+                </div>
+                <div className="score-item-sub">
+                  내 선택: {formatSelectedBinLabel(log)}
+                </div>
+                <div className="score-item-sub answer">
+                  정답: {log.correctBinLabel}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="score-empty">틀린 항목이 없습니다.</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Q19QuizScoreSummary({ q19Quiz }) {
+  const score = q19Quiz?.score || 0;
+  const maxScore = q19Quiz?.maxScore || Q19_PART_DEFS.length;
+  const percent = maxScore > 0 ? Math.round((score / maxScore) * 1000) / 10 : 0;
+  const logs = q19Quiz?.logs || [];
+  const correctLogs = logs.filter((log) => log.isCorrect);
+  const wrongLogs = logs.filter((log) => !log.isCorrect);
+
+  return (
+    <div className="score-box">
+      <div className="score-title">영상 후 터치형 퀴즈 정답 확인</div>
+
+      <div className="score-headline">
+        <strong>{score}점</strong> / 만점 {maxScore}점
+      </div>
+      <div className="score-subline">정답률 {percent}%</div>
+
+      <div className="score-note">
+        만점 기준: 플라스틱 뚜껑, 알루미늄 바닥, 겉 인쇄 코팅면,
+        종이 부분, 은박 코팅 부분을 각각 올바른 배출함에 넣으면 총 5점입니다.
+      </div>
+
+      <div className="score-section">
+        <div className="score-section-title">맞힌 것 ({correctLogs.length})</div>
+        {correctLogs.length > 0 ? (
+          <div className="score-list">
+            {correctLogs.map((log, index) => (
+              <div className="score-row correct" key={`q19-correct-${index}`}>
+                <div className="score-item-main">{log.targetPartLabel}</div>
+                <div className="score-item-sub">
+                  내 선택: {formatSelectedBinLabel(log)}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="score-empty">아직 맞힌 항목이 없습니다.</div>
+        )}
+      </div>
+
+      <div className="score-section">
+        <div className="score-section-title">틀린 것 ({wrongLogs.length})</div>
+        {wrongLogs.length > 0 ? (
+          <div className="score-list">
+            {wrongLogs.map((log, index) => (
+              <div className="score-row wrong" key={`q19-wrong-${index}`}>
+                <div className="score-item-main">{log.targetPartLabel}</div>
+                <div className="score-item-sub">
+                  내 선택: {formatSelectedBinLabel(log)}
+                </div>
+                <div className="score-item-sub answer">
+                  정답: {log.correctBinLabel}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="score-empty">틀린 항목이 없습니다.</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Q19ScoreRevealStep({ q19Quiz, goToPostFromQ19Score }) {
+  return (
+    <>
+      <h2>9단계. 영상 후 퀴즈 정답 확인</h2>
+
+      <p className="desc">
+        영상 후 터치형 퀴즈의 점수와 정답을 확인하세요.
+        이 내용을 확인한 뒤 사후 구매의향 문항으로 이동합니다.
+      </p>
+
+      <Q19QuizScoreSummary q19Quiz={q19Quiz} />
+
+      <button type="button" onClick={goToPostFromQ19Score}>
+        사후 구매의향 문항으로 이동
+      </button>
+    </>
+  );
+}
+
+function AfterGameStep({ survey, updateAfterGame, finishAfterGame }) {
+  return (
+    <>
+      <h2>5단계. 게임 직후·영상 전 인식 문항</h2>
+
+      <LikertQuestion
+        title="18. 원통형 포장은 버리거나 분리배출하기 어렵다고 생각한다."
+        name="q18"
+        value={survey.afterGame.q18}
+        onChange={(value) => updateAfterGame("q18", value)}
+      />
+
+      <LikertQuestion
+        title="19. 원통형 포장은 환경 측면에서 부담이 큰 포장이라고 생각한다."
+        name="q19"
+        value={survey.afterGame.q19}
+        onChange={(value) => updateAfterGame("q19", value)}
+      />
+
+      <button type="button" onClick={finishAfterGame}>
+        점수 확인하기
+      </button>
+    </>
+  );
+}
+
+function ScoreRevealStep({ game, goToVideoFromScore }) {
+  return (
+    <>
+      <h2>6단계. 분리배출 게임 점수 공개</h2>
+
+      <p className="desc">
+        아래에서 게임 점수와 맞은 항목, 틀린 항목을 확인한 뒤,
+        올바른 분리배출 방법 영상을 보세요.
+      </p>
+
+      <GameScoreSummary game={game} />
+
+      <button type="button" onClick={goToVideoFromScore}>
+        올바른 분리배출 방법 영상 보기
+      </button>
+    </>
+  );
+}
+
+function LikertQuestion({ title, name, value, onChange }) {
+  return (
+    <div className="question">
+      <h3>{title}</h3>
+
+      <div className="options">
+        {LIKERT_OPTIONS.map((option) => (
+          <label key={option}>
+            <input
+              type="radio"
+              name={name}
+              checked={value === option}
+              onChange={() => onChange(option)}
+            />
+            {option}
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function VideoStep({ finishVideo }) {
+  const [checked, setChecked] = useState(false);
+
+  return (
+    <>
+      <h2>7단계. 올바른 분리배출 방법 영상</h2>
+
+      <p className="desc">
+        아래 영상을 통해 원통형 포장을 올바르게 분리배출하는 방법을 확인하세요.
+        영상을 본 뒤, 영상 후 터치형 퀴즈로 이동합니다.
+      </p>
+
+      <div className="video-box">
+        {VIDEO_EMBED_URL ? (
+          <iframe
+            src={VIDEO_EMBED_URL}
+            title="원통형 포장 설명 영상"
+            allow="autoplay; encrypted-media"
+            allowFullScreen
+          />
+        ) : (
+          <div>
+            VIDEO_EMBED_URL에 영상 주소를 넣으면 이곳에 영상이 표시됩니다.
+            <br />
+            현재는 영상 자리만 확인하는 상태입니다.
+          </div>
+        )}
+      </div>
+
+      <div className="options">
+        <label>
+          <input
+            type="checkbox"
+            checked={checked}
+            onChange={(event) => setChecked(event.target.checked)}
+          />
+          영상을 시청했습니다.
+        </label>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => {
+          if (!checked) {
+            alert("영상 시청 확인란을 체크하세요.");
+            return;
+          }
+
+          finishVideo();
+        }}
+      >
+        영상 후 터치형 퀴즈로 이동
+      </button>
+    </>
+  );
+}
+
+function Q19QuizStep({
+  q19Quiz,
+  getQ19StageKey,
+  assignQ19PartBin,
+  clearQ19PartBin,
+  finishQ19Quiz,
+}) {
+  const [activePieceId, setActivePieceId] = useState("");
+  const [draggingPieceId, setDraggingPieceId] = useState("");
+  const [dragPreview, setDragPreview] = useState(null);
+  const selectedParts = q19Quiz.selectedParts;
+  const stageKey = getQ19StageKey(selectedParts);
+  const baseImage = getQ19BaseImage(selectedParts);
+
+  const visiblePieces = [
+    ...Q19_LAYER_BASE,
+    getQ19BottomPiece(selectedParts),
+  ];
+
+  if (selectedParts.body_print?.selectedBin) {
+    visiblePieces.push(Q19_PAPER_LAYER);
+  }
+
+  if (selectedParts.body_paper?.selectedBin) {
+    visiblePieces.push(Q19_FOIL_LAYER);
+  }
+
+  const unassignedPieces = visiblePieces.filter(
+    (piece) => !selectedParts[piece.id]?.selectedBin
+  );
+
+  const assignedMaskPieces = visiblePieces.filter(
+    (piece) =>
+      selectedParts[piece.id]?.selectedBin &&
+      (piece.id === "lid" || piece.id === "bottom" || piece.id === "body_foil")
+  );
+
+  const selectedSummary = Q19_PART_DEFS.filter(
+    (part) => selectedParts[part.id]?.selectedBinLabel
+  ).map((part) => ({
+    partId: part.id,
+    partLabel: part.label,
+    binLabel: selectedParts[part.id].selectedBinLabel,
+  }));
+
+  function getQ19DragPiece(partId) {
+    return visiblePieces.find((piece) => piece.id === partId) || null;
+  }
+
+  function startQ19Drag(partId, event) {
+    const piece = getQ19DragPiece(partId);
+
+    setDraggingPieceId(partId);
+    setActivePieceId(partId);
+
+    if (piece) {
+      setDragPreview({
+        id: partId,
+        label: piece.label,
+        pieceImage: piece.pieceImage,
+        x: event?.clientX || 0,
+        y: event?.clientY || 0,
+      });
+    }
+  }
+
+  function handleDropOnBin(binId, partId) {
+    if (!partId) return;
+
+    assignQ19PartBin(partId, binId);
+    setActivePieceId("");
+    setDraggingPieceId("");
+    setDragPreview(null);
+  }
+
+  useEffect(() => {
+    if (!draggingPieceId) return;
+
+    function handlePointerMove(event) {
+      setDragPreview((prev) =>
+        prev
+          ? {
+              ...prev,
+              x: event.clientX,
+              y: event.clientY,
+            }
+          : prev
+      );
+    }
+
+    function handlePointerUp(event) {
+      const dropTarget = event.target.closest?.("[data-bin-id]");
+
+      if (dropTarget) {
+        handleDropOnBin(dropTarget.dataset.binId, draggingPieceId);
+        return;
+      }
+
+      setDraggingPieceId("");
+      setDragPreview(null);
+    }
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+    };
+  }, [draggingPieceId, visiblePieces]);
+
+  return (
+    <>
+      <h2>8단계. 영상 후 터치형 퀴즈</h2>
+
+      <p className="desc">
+        다시 해 보는 퀴즈입니다. 분리할 부분을 직접 선택해 배출함에 넣으세요.
+        모바일에서는 조각을 먼저 누른 뒤, 배출함을 눌러도 됩니다.
+      </p>
+
+      <div className="layer-game-box">
+        <div className="layer-stage q19-layer-stage">
+          <img
+            className="q19-base-image"
+            src={baseImage}
+            alt="원통형 포장 전체 이미지"
+          />
+
+          {unassignedPieces.map((piece) => (
+            <img
+              key={`visual-${piece.id}`}
+              className={`q19-visual-piece ${piece.className || ""}`}
+              src={piece.pieceImage}
+              alt=""
+              aria-hidden="true"
+              draggable={false}
+            />
+          ))}
+
+          <svg
+            className="q19-mask-svg"
+            viewBox={Q19_VIEWBOX}
+            preserveAspectRatio="xMidYMid meet"
+            aria-hidden="true"
+          >
+            {assignedMaskPieces.map((piece) => (
+              <Q19MaskShape key={`mask-${piece.id}`} piece={piece} />
+            ))}
+          </svg>
+
+          <svg
+            className="q19-hit-svg"
+            viewBox={Q19_VIEWBOX}
+            preserveAspectRatio="xMidYMid meet"
+          >
+            {unassignedPieces
+              .filter((piece) => piece.hit && piece.hit.svg)
+              .sort((a, b) => (a.hit.z || 0) - (b.hit.z || 0))
+              .map((piece) => (
+                <Q19HitShape
+                  key={`hit-${piece.id}`}
+                  piece={piece}
+                  selected={activePieceId === piece.id}
+                  onSelect={() => setActivePieceId(piece.id)}
+                  onDragStart={(event) => startQ19Drag(piece.id, event)}
+                  onDragEnd={() => {
+                    setDraggingPieceId("");
+                    setDragPreview(null);
+                  }}
+                />
+              ))}
+          </svg>
+
+          {unassignedPieces.length === 0 && (
+            <div className="layer-stage-empty">
+              모든 조각을 배출함으로 옮겼습니다.
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="bin-drop-grid q19-bin-drop-grid">
+        {BINS.map((bin) => (
+          <div
+            key={bin.id}
+            data-bin-id={bin.id}
+            className="bin-drop-card q19-bin-drop-card"
+            onDragOver={(event) => event.preventDefault()}
+            onDrop={(event) => {
+              event.preventDefault();
+              const droppedId =
+                event.dataTransfer.getData("text/plain") || draggingPieceId;
+              handleDropOnBin(bin.id, droppedId);
+            }}
+            onClick={() => {
+              if (activePieceId) {
+                handleDropOnBin(bin.id, activePieceId);
+              }
+            }}
+          >
+            <div className="bin-drop-icon">{bin.label}</div>
+            <div className="bin-drop-text">여기에 놓기 / 누르기</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="q19-summary-box">
+        <div className="q19-summary-title">선택 내용</div>
+
+        {selectedSummary.length > 0 ? (
+          <div className="q19-summary-list">
+            {selectedSummary.map((item, index) => (
+              <div className="q19-summary-row" key={`${item.partLabel}-${index}`}>
+                <span className="q19-summary-part">{item.partLabel}</span>
+                <span className="q19-summary-arrow">→</span>
+                <span className="q19-summary-bin">{item.binLabel}</span>
+                <button
+                  type="button"
+                  className="summary-reset-button"
+                  onClick={() => {
+                    clearQ19PartBin(item.partId);
+                    setActivePieceId(item.partId);
+                  }}
+                >
+                  다시 선택
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="q19-summary-empty">
+            아직 배출함에 넣은 조각이 없습니다.
+          </div>
+        )}
+      </div>
+
+      <button type="button" onClick={finishQ19Quiz}>
+        퀴즈 응답 제출
+      </button>
+
+      {dragPreview && <DragPreview preview={dragPreview} />}
+    </>
+  );
+}
+
+function Q19MaskShape({ piece }) {
+  if (piece.hit.svg.type === "polygon") {
+    return <polygon className="q19-mask-shape" points={piece.hit.svg.points} />;
+  }
+
+  if (piece.hit.svg.type === "path") {
+    return <path className="q19-mask-shape" d={piece.hit.svg.d} />;
+  }
+
+  return null;
+}
+
+function Q19HitShape({
+  piece,
+  selected,
+  onSelect,
+  onDragStart,
+  onDragEnd,
+}) {
+  const className = selected ? "q19-hit-shape selected" : "q19-hit-shape";
+  const commonProps = {
+    className,
+    draggable: true,
+    onClick: onSelect,
+    onPointerDown: (event) => {
+      event.preventDefault();
+      onSelect();
+      onDragStart(event);
+    },
+    onDragStart: (event) => {
+      event.dataTransfer.setData("text/plain", piece.id);
+      onDragStart(event);
+    },
+    onDragEnd,
+  };
+
+  if (piece.hit.svg.type === "polygon") {
+    return <polygon {...commonProps} points={piece.hit.svg.points} />;
+  }
+
+  if (piece.hit.svg.type === "path") {
+    return <path {...commonProps} d={piece.hit.svg.d} />;
+  }
+
+  return null;
+}
+
+function PlaceholderStep({ title, desc, buttonText, onNext }) {
+  return (
+    <>
+      <h2>{title}</h2>
+      <p className="desc">{desc}</p>
+      <button type="button" onClick={onNext}>
+        {buttonText}
+      </button>
+    </>
+  );
+}
+
+function PostSurveyStep({
+  survey,
+  updatePost,
+  togglePostReason,
+  finishPostSurvey,
+}) {
+  return (
+    <>
+      <h2>10단계. 사후 구매의향</h2>
+
+      <div className="question">
+        <h3>
+          20. 원통형 포장이 분리배출하기 어렵다는 설명을 본 뒤에도,
+          원통형 포장 과자를 구입할 생각이 있나요?
+        </h3>
+
+        <div className="options">
+          {["그렇다", "아니다", "잘 모르겠다"].map((option) => (
+            <label key={option}>
+              <input
+                type="radio"
+                name="q20"
+                checked={survey.postSurvey.q20 === option}
+                onChange={() => updatePost("q20", option)}
+              />
+              {option}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="question">
+        <h3>21. 그렇게 답한 데 영향을 준 이유는 무엇입니까?</h3>
+
+        <div className="options">
+          {POST_REASONS.map((reason) => (
+            <label key={reason}>
+              <input
+                type="checkbox"
+                checked={survey.postSurvey.q21.includes(reason)}
+                onChange={() => togglePostReason(reason)}
+              />
+              {reason}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <button type="button" onClick={finishPostSurvey}>
+        제출 테스트
+      </button>
+    </>
+  );
+}

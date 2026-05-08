@@ -1,0 +1,1140 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f3f4f6;
+  font-family: Arial, "Noto Sans KR", sans-serif;
+  color: #111827;
+}
+
+.app {
+  min-height: 100vh;
+  padding: 16px;
+  display: flex;
+  justify-content: center;
+}
+
+.card {
+  width: 100%;
+  max-width: 620px;
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 18px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+h1 {
+  font-size: 30px;
+  line-height: 1.35;
+  margin: 0 0 16px;
+}
+
+h2 {
+  font-size: 26px;
+  line-height: 1.35;
+  margin: 0 0 16px;
+}
+
+h3 {
+  font-size: 20px;
+  line-height: 1.55;
+  margin: 0 0 14px;
+}
+
+.desc {
+  font-size: 18px;
+  line-height: 1.7;
+  color: #374151;
+}
+
+.respondent-box {
+  margin: 18px 0;
+  padding: 16px;
+  border-radius: 16px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.field {
+  display: block;
+  margin: 18px 0;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+select {
+  width: 100%;
+  margin-top: 8px;
+  padding: 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 14px;
+  font-size: 20px;
+  background: #ffffff;
+}
+
+.question {
+  margin: 18px 0;
+  padding: 18px;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  background: #fafafa;
+  overflow: hidden;
+}
+
+.options label {
+  display: block;
+  margin: 12px 0;
+  padding: 18px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 14px;
+  background: #ffffff;
+  font-size: 19px;
+  line-height: 1.55;
+  cursor: pointer;
+}
+
+.options input {
+  width: 24px;
+  height: 24px;
+  margin-right: 10px;
+  vertical-align: -5px;
+}
+
+button {
+  width: 100%;
+  min-height: 64px;
+  margin-top: 14px;
+  padding: 16px;
+  border: 0;
+  border-radius: 14px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+button.secondary {
+  background: #6b7280;
+}
+
+.button-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.status {
+  margin: 16px 0;
+  padding: 14px;
+  border-radius: 14px;
+  background: #eef2ff;
+  color: #1e3a8a;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.6;
+}
+
+/* 일반 이미지 */
+.image-box {
+  width: 100%;
+  margin: 16px 0;
+  padding: 8px;
+  border-radius: 14px;
+  background: #ffffff;
+  overflow: hidden;
+  text-align: center;
+}
+
+.image-box img {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: 320px;
+  object-fit: contain !important;
+  margin: 0 auto !important;
+}
+
+/* 핫스팟 방식: 봉지형 등 비레이어 게임용 */
+.hotspot-wrap {
+  position: relative !important;
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  line-height: 0 !important;
+}
+
+.hotspot-wrap img {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: 320px;
+  object-fit: contain !important;
+  margin: 0 auto !important;
+}
+
+.hotspot-svg {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none;
+}
+
+.hotspot-shape {
+  fill: rgba(255, 255, 255, 0.001);
+  stroke: rgba(255, 255, 255, 0.001);
+  stroke-width: 4;
+  cursor: pointer;
+  pointer-events: all !important;
+}
+
+.hotspot-shape.selected {
+  fill: rgba(255, 255, 255, 0.001);
+  stroke: rgba(255, 255, 255, 0.001);
+}
+
+/*
+  터치 영역 확인용입니다.
+  테스트할 때만 아래 주석을 풀면 파란색 영역이 보입니다.
+  실제 배포 전에는 다시 주석 처리하세요.
+
+.hotspot-shape,
+.hotspot-shape.selected {
+  fill: rgba(59, 130, 246, 0.22) !important;
+  stroke: rgba(37, 99, 235, 0.95) !important;
+  stroke-width: 5 !important;
+}
+*/
+
+/* 게임 버튼 */
+.target {
+  margin: 16px 0;
+  padding: 16px;
+  border-radius: 14px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.7;
+}
+
+.game-choice-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.game-choice-buttons button {
+  width: 100%;
+}
+
+/* 드래그 조각 카드: 비레이어 게임 또는 분리할 부분 없음용 */
+.piece-help {
+  margin: 16px 0;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+.piece-zone {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 14px 0 18px;
+}
+
+.piece-zone.compact {
+  grid-template-columns: 1fr;
+}
+
+.piece-empty {
+  grid-column: 1 / -1;
+  padding: 18px;
+  border-radius: 16px;
+  border: 1px dashed #cbd5e1;
+  background: #f8fafc;
+  font-size: 17px;
+  line-height: 1.6;
+  color: #475569;
+}
+
+.piece-card {
+  padding: 12px;
+  border-radius: 16px;
+  border: 2px solid #d1d5db;
+  background: #ffffff;
+  cursor: grab;
+  user-select: none;
+}
+
+.piece-card.active {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+.piece-card img {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: 110px;
+  object-fit: contain;
+  margin: 0 auto 8px;
+}
+
+.piece-card-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 110px;
+  margin: 0 auto 8px;
+  border-radius: 12px;
+  background: #f3f4f6;
+  color: #111827;
+  font-size: 18px;
+  font-weight: 800;
+  text-align: center;
+  padding: 8px;
+}
+
+.piece-card-label {
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.piece-card-bin {
+  margin-top: 6px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #374151;
+}
+
+/* 레이어 조각 드래그: 상자형·원통형·q19 */
+.layer-game-box {
+  margin: 16px 0;
+  padding: 10px;
+  border-radius: 16px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.layer-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 0.72;
+  min-height: 260px;
+  border-radius: 16px;
+  background: #ffffff;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.layer-piece {
+  position: absolute;
+  display: block;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: element;
+  cursor: grab;
+}
+
+.layer-piece.active {
+  filter: drop-shadow(0 0 8px rgba(37, 99, 235, 0.8));
+}
+
+.pouch-piece,
+.box-outer-piece,
+.box-inner-piece,
+.cylinder-print-piece,
+.cylinder-lid-piece,
+.cylinder-bottom-piece,
+.q19-print-piece,
+.q19-paper-piece,
+.q19-foil-piece,
+.q19-lid-piece,
+.q19-bottom-piece {
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.layer-stage-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 800;
+  color: #1e3a8a;
+  background: #eff6ff;
+}
+
+/* 배출함 */
+.bin-drop-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 14px 0 18px;
+}
+
+.bin-drop-card {
+  padding: 16px 12px;
+  border-radius: 16px;
+  border: 2px dashed #94a3b8;
+  background: #ffffff;
+  text-align: center;
+  cursor: pointer;
+}
+
+.bin-drop-icon {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.bin-drop-text {
+  margin-top: 6px;
+  font-size: 14px;
+  color: #475569;
+}
+
+/* 기존 팝업형 배출함 코드와 호환용 */
+.bin-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  padding: 18px;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bin-modal-card {
+  width: 100%;
+  max-width: 520px;
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: 22px;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+}
+
+.bin-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.bin-grid button {
+  margin-top: 0;
+  background: #111827;
+}
+
+/* 영상 */
+.video-box {
+  margin: 18px 0;
+  border-radius: 16px;
+  background: #111827;
+  color: #ffffff;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 18px;
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.video-box iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* 모바일 */
+@media (max-width: 480px) {
+  .app {
+    padding: 0;
+  }
+
+  .card {
+    min-height: 100vh;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 18px 12px 28px;
+  }
+
+  h1 {
+    font-size: 30px;
+  }
+
+  h2 {
+    font-size: 28px;
+  }
+
+  h3 {
+    font-size: 21px;
+  }
+
+  .desc,
+  .respondent-box,
+  .options label,
+  select,
+  button {
+    font-size: 20px;
+  }
+
+  .button-row {
+    grid-template-columns: 1fr;
+  }
+
+  .game-choice-buttons {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .game-choice-buttons button {
+    font-size: 18px;
+    padding: 12px 8px;
+  }
+
+  .piece-zone {
+    grid-template-columns: 1fr;
+  }
+
+  .bin-drop-grid,
+  .bin-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .layer-stage {
+    min-height: 230px;
+  }
+
+  .image-box {
+    padding: 4px;
+  }
+}
+
+
+/* q19: 온전한 전체 이미지를 바닥에 깔고, SVG 히트 영역으로 정확히 선택 */
+.q19-layer-stage {
+  background: #ffffff;
+}
+
+.q19-base-image {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.q19-visual-piece {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+
+.q19-hit-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.q19-hit-shape {
+  fill: rgba(255, 255, 255, 0.001);
+  stroke: rgba(255, 255, 255, 0.001);
+  stroke-width: 4;
+  pointer-events: all;
+  cursor: pointer;
+}
+
+.q19-hit-shape.selected {
+  fill: rgba(37, 99, 235, 0.12);
+  stroke: rgba(37, 99, 235, 0.85);
+  stroke-width: 5;
+}
+
+/*
+  q19 터치 영역 확인용입니다.
+  실제 배포 전에는 주석 상태로 두세요.
+
+.q19-hit-shape {
+  fill: rgba(59, 130, 246, 0.22) !important;
+  stroke: rgba(37, 99, 235, 0.95) !important;
+  stroke-width: 5 !important;
+}
+*/
+
+
+.q19-mask-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.q19-mask-shape {
+  fill: #ffffff;
+  stroke: #ffffff;
+  stroke-width: 6;
+}
+
+
+/* q19 가시성 개선: 배출함은 파란색, 선택 정보는 빨간색 계열 */
+.q19-bin-drop-card {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #1e3a8a;
+}
+
+.q19-bin-drop-card:hover {
+  background: #dbeafe;
+}
+
+.q19-bin-drop-card .bin-drop-icon {
+  color: #1d4ed8;
+}
+
+.q19-bin-drop-card .bin-drop-text {
+  color: #1e40af;
+}
+
+.q19-summary-box {
+  margin: 16px 0;
+  padding: 16px;
+  border-radius: 16px;
+  border: 2px solid #fecaca;
+  background: #fef2f2;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.7;
+}
+
+.q19-stage-line {
+  color: #374151;
+}
+
+.q19-stage-line strong {
+  color: #111827;
+}
+
+.q19-selected-line {
+  margin-top: 8px;
+  color: #b91c1c;
+}
+
+.q19-selected-line strong {
+  color: #dc2626;
+}
+
+.q19-summary-title {
+  margin-top: 14px;
+  margin-bottom: 8px;
+  color: #7f1d1d;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.q19-summary-list {
+  display: grid;
+  gap: 8px;
+}
+
+.q19-summary-row {
+  display: grid;
+  grid-template-columns: minmax(96px, auto) 24px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #fecaca;
+}
+
+.q19-summary-part {
+  color: #dc2626;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.q19-summary-arrow {
+  color: #6b7280;
+  font-size: 18px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.q19-summary-bin {
+  color: #1d4ed8;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.q19-summary-empty {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #fecaca;
+  color: #7f1d1d;
+}
+
+.summary-reset-button {
+  width: auto;
+  min-height: 0;
+  margin-top: 0;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #374151;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.summary-reset-button:hover {
+  background: #111827;
+}
+
+@media (max-width: 480px) {
+  .q19-summary-box {
+    font-size: 19px;
+    padding: 16px 14px;
+  }
+
+  .q19-summary-title {
+    font-size: 20px;
+  }
+
+  .q19-summary-row {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .q19-summary-arrow {
+    text-align: left;
+  }
+
+  .q19-summary-part,
+  .q19-summary-arrow,
+  .q19-summary-bin {
+    font-size: 20px;
+  }
+}
+
+
+/* 4단계 선택 내용: 줄바꿈·색상 구분 */
+.game-summary-box {
+  margin: 16px 0;
+  padding: 16px;
+  border-radius: 16px;
+  border: 2px solid #fecaca;
+  background: #fef2f2;
+  line-height: 1.7;
+}
+
+.game-summary-title {
+  margin-bottom: 8px;
+  color: #7f1d1d;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.game-summary-list {
+  display: grid;
+  gap: 8px;
+}
+
+.game-summary-row {
+  display: grid;
+  grid-template-columns: minmax(90px, auto) 24px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #fecaca;
+}
+
+.game-summary-part {
+  color: #dc2626;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.game-summary-arrow {
+  color: #6b7280;
+  font-size: 18px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.game-summary-bin {
+  color: #1d4ed8;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+@media (max-width: 480px) {
+  .game-summary-title {
+    font-size: 20px;
+  }
+
+  .game-summary-row {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .game-summary-arrow {
+    text-align: left;
+  }
+
+  .game-summary-part,
+  .game-summary-arrow,
+  .game-summary-bin {
+    font-size: 20px;
+  }
+}
+
+
+/* 원통형 game_cylinder: 전체 이미지 + SVG hit area + 제거 영역 흰색 마스크 */
+.mask-game-stage {
+  background: #ffffff;
+}
+
+.mask-game-base-image {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.mask-game-mask-svg,
+.mask-game-hit-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.mask-game-mask-svg {
+  pointer-events: none;
+}
+
+.mask-game-mask-shape {
+  fill: #ffffff;
+  stroke: #ffffff;
+  stroke-width: 6;
+}
+
+.mask-game-hit-shape {
+  fill: rgba(255, 255, 255, 0.001);
+  stroke: rgba(255, 255, 255, 0.001);
+  stroke-width: 4;
+  pointer-events: all;
+  cursor: pointer;
+}
+
+.mask-game-hit-shape.selected {
+  fill: rgba(37, 99, 235, 0.12);
+  stroke: rgba(37, 99, 235, 0.85);
+  stroke-width: 5;
+}
+
+
+/* SVG hit area도 실제 드래그처럼 작동하도록 보조 */
+.mask-game-hit-shape,
+.q19-hit-shape {
+  touch-action: none;
+}
+
+.bin-drop-card[data-bin-id] {
+  user-select: none;
+}
+
+
+/* 분리할 부분 없음: 하단 조각 카드 없이 전체 이미지 자체를 드래그 */
+.whole-package-stage {
+  background: #ffffff;
+}
+
+.whole-package-image {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-drag: element;
+  touch-action: none;
+}
+
+.whole-package-image.active {
+  filter: drop-shadow(0 0 8px rgba(37, 99, 235, 0.8));
+}
+
+
+/* q19: 종이 제거 후 떨어져 나온 알루미늄 바닥 선택 영역 */
+.q19-bottom-detached-piece {
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+}
+
+
+/* SVG 영역을 드래그할 때 보이는 미리보기 */
+.drag-preview {
+  position: fixed;
+  z-index: 2000;
+  width: 128px;
+  min-height: 120px;
+  transform: translate(-50%, -50%);
+  padding: 8px;
+  border-radius: 14px;
+  border: 2px solid #2563eb;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.25);
+  pointer-events: none;
+  text-align: center;
+  color: #1d4ed8;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.drag-preview img {
+  display: block;
+  width: 100%;
+  height: 82px;
+  object-fit: contain;
+  margin: 0 auto 6px;
+}
+
+.drag-preview-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 82px;
+  margin-bottom: 6px;
+  border-radius: 10px;
+  background: #eff6ff;
+}
+
+@media (max-width: 480px) {
+  .drag-preview {
+    width: 110px;
+    min-height: 106px;
+    font-size: 14px;
+  }
+
+  .drag-preview img,
+  .drag-preview-fallback {
+    height: 70px;
+  }
+}
+
+
+/* q19 드래그 미리보기와 조각 정리 */
+.q19-bottom-piece,
+.q19-lid-piece,
+.q19-print-piece,
+.q19-paper-piece,
+.q19-foil-piece {
+  pointer-events: none;
+}
+
+
+/* q19: 이미 배출한 뚜껑/바닥/포일은 배경 이미지 위에서도 계속 가림 */
+.q19-mask-svg {
+  z-index: 4;
+}
+
+.q19-hit-svg {
+  z-index: 5;
+}
+
+.q19-mask-shape {
+  fill: #ffffff;
+  stroke: #ffffff;
+  stroke-width: 10;
+  vector-effect: non-scaling-stroke;
+}
+
+
+/* 점수 공개 */
+.score-box {
+  margin: 18px 0;
+  padding: 18px;
+  border-radius: 18px;
+  border: 2px solid #bfdbfe;
+  background: #eff6ff;
+}
+
+.score-title {
+  font-size: 20px;
+  font-weight: 900;
+  color: #1e3a8a;
+  margin-bottom: 10px;
+}
+
+.score-headline {
+  font-size: 28px;
+  font-weight: 900;
+  color: #111827;
+  line-height: 1.4;
+}
+
+.score-headline strong {
+  color: #1d4ed8;
+}
+
+.score-subline {
+  margin-top: 4px;
+  font-size: 18px;
+  font-weight: 800;
+  color: #374151;
+}
+
+.score-note {
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid #dbeafe;
+  font-size: 17px;
+  line-height: 1.6;
+  color: #374151;
+}
+
+.score-section {
+  margin-top: 16px;
+}
+
+.score-section-title {
+  margin-bottom: 8px;
+  font-size: 18px;
+  font-weight: 900;
+  color: #111827;
+}
+
+.score-list {
+  display: grid;
+  gap: 10px;
+}
+
+.score-row {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid #dbeafe;
+}
+
+.score-row.correct {
+  border-left: 6px solid #16a34a;
+}
+
+.score-row.wrong {
+  border-left: 6px solid #dc2626;
+}
+
+.score-item-main {
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1.5;
+  color: #111827;
+}
+
+.score-item-sub {
+  margin-top: 4px;
+  font-size: 17px;
+  line-height: 1.6;
+  color: #374151;
+}
+
+.score-item-sub.answer {
+  color: #b91c1c;
+  font-weight: 800;
+}
+
+.score-empty {
+  padding: 14px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px dashed #93c5fd;
+  font-size: 17px;
+  color: #475569;
+}
+
+
+@media (max-width: 480px) {
+  .score-box {
+    padding: 16px 14px;
+  }
+
+  .score-title {
+    font-size: 21px;
+  }
+
+  .score-headline {
+    font-size: 30px;
+  }
+
+  .score-subline,
+  .score-section-title,
+  .score-item-main,
+  .score-item-sub,
+  .score-empty,
+  .score-note {
+    font-size: 19px;
+  }
+}
+
+
+@media (max-width: 480px) {
+  .summary-reset-button {
+    width: fit-content;
+    margin-top: 6px;
+    padding: 9px 13px;
+    font-size: 17px;
+  }
+}
