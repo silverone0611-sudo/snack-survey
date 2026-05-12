@@ -122,6 +122,11 @@ button.secondary {
   background: #6b7280;
 }
 
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .button-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -451,94 +456,100 @@ button.secondary {
   background: #111827;
 }
 
-/* 영상 */
+/* 영상: 9:16 세로형 mp4 숏츠 */
+.video-page {
+  min-height: 100vh;
+  padding: 16px 0 24px;
+}
+
+.video-card {
+  width: 100%;
+}
+
+.step-label {
+  display: inline-block;
+  margin: 0 0 12px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #0369a1;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.video-title {
+  margin: 0 0 10px;
+  color: #111827;
+  font-size: 28px;
+  line-height: 1.35;
+  font-weight: 900;
+  word-break: keep-all;
+}
+
+.video-guide {
+  margin: 0 0 16px;
+  color: #374151;
+  font-size: 18px;
+  line-height: 1.65;
+  word-break: keep-all;
+}
+
+/* 기존 video-box도 세로 영상용으로 변경 */
 .video-box {
-  margin: 18px 0;
-  border-radius: 16px;
-  background: #111827;
+  width: min(100%, 340px);
+  aspect-ratio: 9 / 16;
+  margin: 18px auto;
+  border-radius: 22px;
+  background: #000000;
   color: #ffffff;
   overflow: hidden;
-  aspect-ratio: 16 / 9;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 18px;
+  padding: 0;
   font-size: 18px;
   line-height: 1.6;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.22);
 }
 
-.video-box iframe {
+.video-box iframe,
+.video-box video {
   width: 100%;
   height: 100%;
   border: 0;
+  display: block;
+  object-fit: contain;
+  background: #000000;
 }
 
-/* 모바일 */
-@media (max-width: 480px) {
-  .app {
-    padding: 0;
-  }
-
-  .card {
-    min-height: 100vh;
-    border-radius: 0;
-    box-shadow: none;
-    padding: 18px 12px 28px;
-  }
-
-  h1 {
-    font-size: 30px;
-  }
-
-  h2 {
-    font-size: 28px;
-  }
-
-  h3 {
-    font-size: 21px;
-  }
-
-  .desc,
-  .respondent-box,
-  .options label,
-  select,
-  button {
-    font-size: 20px;
-  }
-
-  .button-row {
-    grid-template-columns: 1fr;
-  }
-
-  .game-choice-buttons {
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-
-  .game-choice-buttons button {
-    font-size: 18px;
-    padding: 12px 8px;
-  }
-
-  .piece-zone {
-    grid-template-columns: 1fr;
-  }
-
-  .bin-drop-grid,
-  .bin-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .layer-stage {
-    min-height: 230px;
-  }
-
-  .image-box {
-    padding: 4px;
-  }
+/* 새 JSX에서 사용할 세로형 영상 클래스 */
+.shorts-video-frame {
+  width: min(100%, 340px);
+  aspect-ratio: 9 / 16;
+  margin: 18px auto;
+  border-radius: 22px;
+  overflow: hidden;
+  background: #000000;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.22);
 }
 
+.shorts-video {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  background: #000000;
+}
+
+.video-warning {
+  margin: 10px 0 12px;
+  color: #dc2626;
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1.5;
+  text-align: center;
+}
 
 /* q19: 온전한 전체 이미지를 바닥에 깔고, SVG 히트 영역으로 정확히 선택 */
 .q19-layer-stage {
@@ -598,7 +609,6 @@ button.secondary {
 }
 */
 
-
 .q19-mask-svg {
   position: absolute;
   inset: 0;
@@ -612,7 +622,6 @@ button.secondary {
   stroke: #ffffff;
   stroke-width: 6;
 }
-
 
 /* q19 가시성 개선: 배출함은 파란색, 선택 정보는 빨간색 계열 */
 .q19-bin-drop-card {
@@ -712,33 +721,6 @@ button.secondary {
   color: #7f1d1d;
 }
 
-@media (max-width: 480px) {
-  .q19-summary-box {
-    font-size: 19px;
-    padding: 16px 14px;
-  }
-
-  .q19-summary-title {
-    font-size: 20px;
-  }
-
-  .q19-summary-row {
-    grid-template-columns: 1fr;
-    gap: 2px;
-  }
-
-  .q19-summary-arrow {
-    text-align: left;
-  }
-
-  .q19-summary-part,
-  .q19-summary-arrow,
-  .q19-summary-bin {
-    font-size: 20px;
-  }
-}
-
-
 /* 4단계 선택 내용: 줄바꿈·색상 구분 */
 .game-summary-box {
   margin: 16px 0;
@@ -791,28 +773,6 @@ button.secondary {
   font-weight: 900;
 }
 
-@media (max-width: 480px) {
-  .game-summary-title {
-    font-size: 20px;
-  }
-
-  .game-summary-row {
-    grid-template-columns: 1fr;
-    gap: 2px;
-  }
-
-  .game-summary-arrow {
-    text-align: left;
-  }
-
-  .game-summary-part,
-  .game-summary-arrow,
-  .game-summary-bin {
-    font-size: 20px;
-  }
-}
-
-
 /* 원통형 game_cylinder: 전체 이미지 + SVG hit area + 제거 영역 흰색 마스크 */
 .mask-game-stage {
   background: #ffffff;
@@ -860,7 +820,6 @@ button.secondary {
   stroke-width: 5;
 }
 
-
 /* SVG hit area도 실제 드래그처럼 작동하도록 보조 */
 .mask-game-hit-shape,
 .q19-hit-shape {
@@ -870,7 +829,6 @@ button.secondary {
 .bin-drop-card[data-bin-id] {
   user-select: none;
 }
-
 
 /* 분리할 부분 없음: 하단 조각 카드 없이 전체 이미지 자체를 드래그 */
 .whole-package-stage {
@@ -894,7 +852,6 @@ button.secondary {
   filter: drop-shadow(0 0 8px rgba(37, 99, 235, 0.8));
 }
 
-
 /* q19: 종이 제거 후 떨어져 나온 알루미늄 바닥 선택 영역 */
 .q19-bottom-detached-piece {
   left: 0;
@@ -902,7 +859,6 @@ button.secondary {
   width: 100%;
   height: 100%;
 }
-
 
 /* SVG 영역을 드래그할 때 보이는 미리보기 */
 .drag-preview {
@@ -943,20 +899,6 @@ button.secondary {
   background: #eff6ff;
 }
 
-@media (max-width: 480px) {
-  .drag-preview {
-    width: 110px;
-    min-height: 106px;
-    font-size: 14px;
-  }
-
-  .drag-preview img,
-  .drag-preview-fallback {
-    height: 70px;
-  }
-}
-
-
 /* q19 드래그 미리보기와 조각 정리 */
 .q19-bottom-piece,
 .q19-lid-piece,
@@ -965,7 +907,6 @@ button.secondary {
 .q19-foil-piece {
   pointer-events: none;
 }
-
 
 /* q19: 이미 배출한 뚜껑/바닥/포일은 배경 이미지 위에서도 계속 가림 */
 .q19-mask-svg {
@@ -982,7 +923,6 @@ button.secondary {
   stroke-width: 10;
   vector-effect: non-scaling-stroke;
 }
-
 
 /* 포장 선호도 조사: 선택지만 가로 배열 */
 .choice-options {
@@ -1006,23 +946,6 @@ button.secondary {
   margin: 0;
   text-align: center;
 }
-
-@media (max-width: 480px) {
-  .choice-options.option-count-2 {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .choice-options.option-count-3 {
-    grid-template-columns: 1fr;
-  }
-
-  .choice-options label {
-    min-height: 62px;
-    padding-left: 10px;
-    padding-right: 10px;
-  }
-}
-
 
 /* 전체 버전: 조각 터치 → 배출함 팝업 선택 */
 .layer-piece,
@@ -1110,6 +1033,192 @@ button.secondary {
   width: min(100%, 250px);
 }
 
+/* 터치형 팝업 방식: 화면 하단 배출함 드롭 영역 제거 */
+.bin-drop-grid,
+.q19-bin-drop-grid {
+  display: none !important;
+}
+
+/* 선택 내용: 다시 선택 버튼 */
+.summary-reset-button {
+  width: auto;
+  min-height: 40px;
+  margin-top: 0;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.game-summary-row,
+.q19-summary-row {
+  grid-template-columns: minmax(90px, auto) 24px 1fr auto;
+}
+
+/* 모바일 */
+@media (max-width: 480px) {
+  .app {
+    padding: 0;
+  }
+
+  .card {
+    min-height: 100vh;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 18px 12px 28px;
+  }
+
+  h1 {
+    font-size: 30px;
+  }
+
+  h2 {
+    font-size: 28px;
+  }
+
+  h3 {
+    font-size: 21px;
+  }
+
+  .desc,
+  .respondent-box,
+  .options label,
+  select,
+  button {
+    font-size: 20px;
+  }
+
+  .button-row {
+    grid-template-columns: 1fr;
+  }
+
+  .game-choice-buttons {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .game-choice-buttons button {
+    font-size: 18px;
+    padding: 12px 8px;
+  }
+
+  .piece-zone {
+    grid-template-columns: 1fr;
+  }
+
+  .bin-drop-grid,
+  .bin-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .layer-stage {
+    min-height: 230px;
+  }
+
+  .image-box {
+    padding: 4px;
+  }
+
+  .video-title {
+    font-size: 26px;
+  }
+
+  .video-guide {
+    font-size: 18px;
+  }
+
+  .video-box,
+  .shorts-video-frame {
+    width: min(100%, 320px);
+    border-radius: 20px;
+  }
+
+  .video-warning {
+    font-size: 16px;
+  }
+
+  .q19-summary-box {
+    font-size: 19px;
+    padding: 16px 14px;
+  }
+
+  .q19-summary-title {
+    font-size: 20px;
+  }
+
+  .q19-summary-row {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .q19-summary-arrow {
+    text-align: left;
+  }
+
+  .q19-summary-part,
+  .q19-summary-arrow,
+  .q19-summary-bin {
+    font-size: 20px;
+  }
+
+  .game-summary-title {
+    font-size: 20px;
+  }
+
+  .game-summary-row {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .game-summary-arrow {
+    text-align: left;
+  }
+
+  .game-summary-part,
+  .game-summary-arrow,
+  .game-summary-bin {
+    font-size: 20px;
+  }
+
+  .drag-preview {
+    width: 110px;
+    min-height: 106px;
+    font-size: 14px;
+  }
+
+  .drag-preview img,
+  .drag-preview-fallback {
+    height: 70px;
+  }
+
+  .choice-options.option-count-2 {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .choice-options.option-count-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .choice-options label {
+    min-height: 62px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .game-summary-row,
+  .q19-summary-row {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-reset-button {
+    width: 100%;
+    min-height: 48px;
+    font-size: 17px;
+  }
+}
+
 @media (max-width: 768px), (pointer: coarse) {
   .bin-modal-backdrop {
     align-items: flex-end;
@@ -1166,57 +1275,9 @@ button.secondary {
   .bin-option-name {
     font-size: 17px;
   }
-}
 
-/* 터치형 팝업 방식: 화면 하단 배출함 드롭 영역 제거 */
-.bin-drop-grid,
-.q19-bin-drop-grid {
-  display: none !important;
-}
-
-
-/* 선택 내용: 다시 선택 버튼 */
-.summary-reset-button {
-  width: auto;
-  min-height: 40px;
-  margin-top: 0;
-  padding: 8px 12px;
-  border-radius: 12px;
-  background: #ef4444;
-  color: #ffffff;
-  font-size: 15px;
-  font-weight: 900;
-}
-
-.game-summary-row,
-.q19-summary-row {
-  grid-template-columns: minmax(90px, auto) 24px 1fr auto;
-}
-
-@media (max-width: 480px) {
-  .game-summary-row,
-  .q19-summary-row {
-    grid-template-columns: 1fr;
-  }
-
-  .summary-reset-button {
-    width: 100%;
-    min-height: 48px;
-    font-size: 17px;
-  }
-}
-
-
-/* 배출함 이미지 카드 크기 최종 보정 */
-.bin-option-image {
-  width: 118px;
-  height: 158px;
-  object-fit: contain;
-}
-
-@media (max-width: 768px), (pointer: coarse) {
-  .bin-option-image {
-    width: 104px;
-    height: 140px;
+  .video-box,
+  .shorts-video-frame {
+    width: min(100%, 300px);
   }
 }

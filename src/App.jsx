@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import "./App.css";
 
 const STORAGE_KEY = "snack_survey_draft";
+const VIDEO_SRC = "/videos/snack-shorts.mp4";
 
 const PACKAGING_ITEMS = [
   {
@@ -212,8 +213,6 @@ const PRINGLES_HOTSPOTS = [
   },
 ];
 
-const VIDEO_EMBED_URL = "";
-
 const Q19_VIEWBOX = PRINGLES_VIEWBOX;
 
 const Q19_BODY_HIT = {
@@ -228,14 +227,6 @@ const Q19_BOTTOM_ATTACHED_HIT = {
   ...PRINGLES_HOTSPOTS.find((part) => part.id === "bottom"),
 };
 
-/*
-  q19에서 종이 부분을 제거한 뒤에는 알루미늄 바닥이 통에 붙은 위치가 아니라
-  떨어져 나온 바닥 조각 위치에서 선택되어야 합니다.
-
-  아래 좌표는 piece_q19_bottom.png의 실제 타원형 바닥 위치를 따라간 다각형 영역입니다.
-  사각형이 아니라 바닥 조각의 윤곽을 따라 선택되도록 조정했습니다.
-  만약 실제 화면에서 선택 위치가 약간 어긋나면 points 값만 미세 조정하면 됩니다.
-*/
 const Q19_BOTTOM_DETACHED_HIT = {
   id: "bottom",
   label: "알루미늄 바닥",
@@ -826,7 +817,6 @@ export default function App() {
   }
 
   function finishCurrentGameItem() {
-
     const item = GAME_ITEMS[survey.game.currentIndex];
     const mode = survey.game.modes[item.id] || "";
     const selectedMap = survey.game.selectedParts[item.id] || {};
@@ -872,7 +862,9 @@ export default function App() {
       return;
     }
 
-    const unassignedPart = item.hotspots.find((part) => selectedMap[part.id] && !selectedMap[part.id].selectedBin);
+    const unassignedPart = item.hotspots.find(
+      (part) => selectedMap[part.id] && !selectedMap[part.id].selectedBin
+    );
 
     if (unassignedPart) {
       alert("선택한 조각을 배출함으로 끌어다 놓거나, 조각을 선택한 뒤 배출함을 눌러 주세요.");
@@ -1128,11 +1120,12 @@ export default function App() {
       <section className="card">
         {step === "intro" && (
           <>
-            <h1>원통형 포장에 대한 편의성·환경성 인식과 구매 태도 조사</h1>
+            <h1>과자 포장 유형에 대한 학생 인식과 선택 조사</h1>
 
             <p className="desc">
-              과자 포장 유형에 대한 선호도, 포장 형태별 이용 경험,
-              분리배출 판단, 영상 시청 후 구매의향을 알아보기 위한 조사입니다.
+              과자 포장 형태를 보고 선택, 이용 경험, 포장 처리 방법 등에 대해 응답하는 조사입니다.
+              정답이 있는 문항과 개인 의견을 묻는 문항이 함께 포함되어 있습니다.
+              평소 생각에 따라 솔직하게 응답해 주세요.
             </p>
 
             <div className="respondent-box">
@@ -1216,9 +1209,7 @@ export default function App() {
           />
         )}
 
-        {step === "video" && (
-          <VideoStep finishVideo={finishVideo} />
-        )}
+        {step === "video" && <VideoStep finishVideo={finishVideo} />}
 
         {step === "quiz" && (
           <Q19QuizStep
@@ -1453,12 +1444,10 @@ function GameStep({
           },
         ]
       : isLayeredPieceGame
-        ? item.layeredPieces.filter(
-            (piece) => !selectedMap[piece.id]?.selectedBin
-          )
-        : isMaskedPieceGame
-          ? item.hotspots.filter((part) => !selectedMap[part.id]?.selectedBin)
-          : item.hotspots.filter((part) => selectedMap[part.id]);
+      ? item.layeredPieces.filter((piece) => !selectedMap[piece.id]?.selectedBin)
+      : isMaskedPieceGame
+      ? item.hotspots.filter((part) => !selectedMap[part.id]?.selectedBin)
+      : item.hotspots.filter((part) => selectedMap[part.id]);
 
   const selectedPartsSummary =
     mode === "no_separation"
@@ -1636,11 +1625,7 @@ function GameStep({
         </div>
       ) : (
         <div className="image-box">
-          <HotspotImage
-            item={item}
-            selectedMap={selectedMap}
-            onTap={tapGamePart}
-          />
+          <HotspotImage item={item} selectedMap={selectedMap} onTap={tapGamePart} />
         </div>
       )}
 
@@ -1682,7 +1667,6 @@ function GameStep({
 
       {mode && (
         <>
-
           {selectedPartsSummary.length > 0 && (
             <GameSelectionSummary
               items={selectedPartsSummary}
@@ -1833,11 +1817,7 @@ function MaskedGameImage({
   return (
     <div className="layer-game-box">
       <div className="layer-stage mask-game-stage">
-        <img
-          className="mask-game-base-image"
-          src={item.image}
-          alt={item.name}
-        />
+        <img className="mask-game-base-image" src={item.image} alt={item.name} />
 
         <svg
           className="mask-game-mask-svg"
@@ -2066,11 +2046,7 @@ function BinModal({ title, desc, chooseBin, close }) {
 
         <div className="bin-grid">
           {BINS.map((bin) => (
-            <BinOption
-              key={bin.id}
-              bin={bin}
-              onChoose={() => chooseBin(bin.id)}
-            />
+            <BinOption key={bin.id} bin={bin} onChoose={() => chooseBin(bin.id)} />
           ))}
         </div>
 
@@ -2154,56 +2130,49 @@ function LikertQuestion({ title, name, value, onChange }) {
 }
 
 function VideoStep({ finishVideo }) {
-  const [checked, setChecked] = useState(false);
+  const [videoWatched, setVideoWatched] = useState(false);
+  const [videoError, setVideoError] = useState(false);
 
   return (
     <>
       <h2>6단계. 영상 시청</h2>
 
       <p className="desc">
-        아래 영상을 시청한 뒤, 영상 후 터치형 퀴즈로 이동하세요.
+        아래 영상을 끝까지 시청한 뒤, 영상 후 터치형 퀴즈로 이동하세요.
       </p>
 
-      <div className="video-box">
-        {VIDEO_EMBED_URL ? (
-          <iframe
-            src={VIDEO_EMBED_URL}
-            title="원통형 포장 설명 영상"
-            allow="autoplay; encrypted-media"
-            allowFullScreen
-          />
-        ) : (
-          <div>
-            VIDEO_EMBED_URL에 영상 주소를 넣으면 이곳에 영상이 표시됩니다.
-            <br />
-            현재는 영상 자리만 확인하는 상태입니다.
-          </div>
-        )}
+      <div className="shorts-video-frame">
+        <video
+          className="shorts-video"
+          controls
+          playsInline
+          preload="metadata"
+          onEnded={() => setVideoWatched(true)}
+          onError={() => setVideoError(true)}
+        >
+          <source src={VIDEO_SRC} type="video/mp4" />
+          이 브라우저에서는 동영상을 재생할 수 없습니다.
+        </video>
       </div>
 
-      <div className="options">
-        <label>
-          <input
-            type="checkbox"
-            checked={checked}
-            onChange={(event) => setChecked(event.target.checked)}
-          />
-          영상을 시청했습니다.
-        </label>
-      </div>
+      {videoError && (
+        <p className="video-warning">
+          영상 파일을 불러오지 못했습니다. public/videos/snack-shorts.mp4 경로와 파일명을 확인하세요.
+        </p>
+      )}
+
+      {!videoWatched && !videoError && (
+        <p className="video-warning">
+          영상을 끝까지 보면 아래 버튼이 활성화됩니다.
+        </p>
+      )}
 
       <button
         type="button"
-        onClick={() => {
-          if (!checked) {
-            alert("영상 시청 확인란을 체크하세요.");
-            return;
-          }
-
-          finishVideo();
-        }}
+        disabled={!videoWatched}
+        onClick={finishVideo}
       >
-        영상 후 터치형 퀴즈로 이동
+        {videoWatched ? "영상 후 터치형 퀴즈로 이동" : "영상을 끝까지 본 뒤 이동"}
       </button>
     </>
   );
@@ -2222,13 +2191,9 @@ function Q19QuizStep({
   const [dragPreview, setDragPreview] = useState(null);
   const isMobileLike = useIsMobileLike();
   const selectedParts = q19Quiz.selectedParts;
-  const stageKey = getQ19StageKey(selectedParts);
   const baseImage = getQ19BaseImage(selectedParts);
 
-  const visiblePieces = [
-    ...Q19_LAYER_BASE,
-    getQ19BottomPiece(selectedParts),
-  ];
+  const visiblePieces = [...Q19_LAYER_BASE, getQ19BottomPiece(selectedParts)];
 
   if (selectedParts.body_print?.selectedBin) {
     visiblePieces.push(Q19_PAPER_LAYER);
@@ -2248,13 +2213,13 @@ function Q19QuizStep({
       (piece.id === "lid" || piece.id === "bottom" || piece.id === "body_foil")
   );
 
-  const selectedSummary = Q19_PART_DEFS.filter(
-    (part) => selectedParts[part.id]
-  ).map((part) => ({
-    partId: part.id,
-    partLabel: part.label,
-    binLabel: selectedParts[part.id].selectedBinLabel || "배출함 미선택",
-  }));
+  const selectedSummary = Q19_PART_DEFS.filter((part) => selectedParts[part.id]).map(
+    (part) => ({
+      partId: part.id,
+      partLabel: part.label,
+      binLabel: selectedParts[part.id].selectedBinLabel || "배출함 미선택",
+    })
+  );
 
   function getQ19DragPiece(partId) {
     return visiblePieces.find((piece) => piece.id === partId) || null;
@@ -2333,11 +2298,7 @@ function Q19QuizStep({
 
       <div className="layer-game-box">
         <div className="layer-stage q19-layer-stage">
-          <img
-            className="q19-base-image"
-            src={baseImage}
-            alt="원통형 포장 전체 이미지"
-          />
+          <img className="q19-base-image" src={baseImage} alt="원통형 포장 전체 이미지" />
 
           {unassignedPieces.map((piece) => (
             <img
@@ -2393,7 +2354,6 @@ function Q19QuizStep({
           )}
         </div>
       </div>
-
 
       <div className="q19-summary-box">
         <div className="q19-summary-title">선택 내용</div>
@@ -2493,18 +2453,6 @@ function Q19HitShape({
   }
 
   return null;
-}
-
-function PlaceholderStep({ title, desc, buttonText, onNext }) {
-  return (
-    <>
-      <h2>{title}</h2>
-      <p className="desc">{desc}</p>
-      <button type="button" onClick={onNext}>
-        {buttonText}
-      </button>
-    </>
-  );
 }
 
 function PostSurveyStep({
