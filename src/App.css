@@ -1281,3 +1281,9 @@ button:disabled {
     width: min(100%, 300px);
   }
 }
+
+/* 결과 화면: 오답 텍스트만 빨간색 표시 */
+.result-wrong-text {
+  color: #dc2626;
+  font-weight: 900;
+}
