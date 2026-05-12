@@ -676,7 +676,7 @@ button.secondary {
 
 .q19-summary-row {
   display: grid;
-  grid-template-columns: minmax(96px, auto) 24px 1fr auto;
+  grid-template-columns: minmax(96px, auto) 24px 1fr;
   align-items: center;
   gap: 8px;
   padding: 10px 12px;
@@ -710,23 +710,6 @@ button.secondary {
   background: #ffffff;
   border: 1px solid #fecaca;
   color: #7f1d1d;
-}
-
-.summary-reset-button {
-  width: auto;
-  min-height: 0;
-  margin-top: 0;
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: #374151;
-  color: #ffffff;
-  font-size: 15px;
-  font-weight: 900;
-  white-space: nowrap;
-}
-
-.summary-reset-button:hover {
-  background: #111827;
 }
 
 @media (max-width: 480px) {
@@ -780,7 +763,7 @@ button.secondary {
 
 .game-summary-row {
   display: grid;
-  grid-template-columns: minmax(90px, auto) 24px 1fr auto;
+  grid-template-columns: minmax(90px, auto) 24px 1fr;
   align-items: center;
   gap: 8px;
   padding: 10px 12px;
@@ -1001,140 +984,239 @@ button.secondary {
 }
 
 
-/* 점수 공개 */
-.score-box {
-  margin: 18px 0;
-  padding: 18px;
-  border-radius: 18px;
-  border: 2px solid #bfdbfe;
-  background: #eff6ff;
-}
-
-.score-title {
-  font-size: 20px;
-  font-weight: 900;
-  color: #1e3a8a;
-  margin-bottom: 10px;
-}
-
-.score-headline {
-  font-size: 28px;
-  font-weight: 900;
-  color: #111827;
-  line-height: 1.4;
-}
-
-.score-headline strong {
-  color: #1d4ed8;
-}
-
-.score-subline {
-  margin-top: 4px;
-  font-size: 18px;
-  font-weight: 800;
-  color: #374151;
-}
-
-.score-note {
-  margin-top: 10px;
-  padding: 12px 14px;
-  border-radius: 14px;
-  background: #ffffff;
-  border: 1px solid #dbeafe;
-  font-size: 17px;
-  line-height: 1.6;
-  color: #374151;
-}
-
-.score-section {
-  margin-top: 16px;
-}
-
-.score-section-title {
-  margin-bottom: 8px;
-  font-size: 18px;
-  font-weight: 900;
-  color: #111827;
-}
-
-.score-list {
+/* 포장 선호도 조사: 선택지만 가로 배열 */
+.choice-options {
   display: grid;
   gap: 10px;
 }
 
-.score-row {
-  padding: 12px 14px;
-  border-radius: 14px;
-  background: #ffffff;
-  border: 1px solid #dbeafe;
+.choice-options.option-count-2 {
+  grid-template-columns: 1fr 1fr;
 }
 
-.score-row.correct {
-  border-left: 6px solid #16a34a;
+.choice-options.option-count-3 {
+  grid-template-columns: repeat(3, 1fr);
 }
 
-.score-row.wrong {
-  border-left: 6px solid #dc2626;
+.choice-options label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 64px;
+  margin: 0;
+  text-align: center;
 }
 
-.score-item-main {
-  font-size: 18px;
-  font-weight: 900;
-  line-height: 1.5;
+@media (max-width: 480px) {
+  .choice-options.option-count-2 {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .choice-options.option-count-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .choice-options label {
+    min-height: 62px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+}
+
+
+/* 전체 버전: 조각 터치 → 배출함 팝업 선택 */
+.layer-piece,
+.whole-package-image,
+.mask-game-hit-shape,
+.q19-hit-shape {
+  cursor: pointer;
+}
+
+/* 배출함 팝업: 회색 배경 + 큰 쓰레기통 이미지 카드 */
+.bin-modal-backdrop {
+  padding: 12px;
+}
+
+.bin-modal-card {
+  width: 100%;
+  max-width: 560px;
+}
+
+.bin-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* 카드 전체는 밝은 회색 배경 */
+.bin-option-button {
+  width: 100%;
+  min-height: 190px;
+  margin-top: 0;
+  padding: 14px 12px 12px;
+  border-radius: 18px;
+  border: 2px solid #cbd5e1;
+  background: #e5e7eb;
   color: #111827;
+  display: grid;
+  grid-template-columns: 1fr;
+  justify-items: center;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.08);
 }
 
-.score-item-sub {
-  margin-top: 4px;
-  font-size: 17px;
-  line-height: 1.6;
-  color: #374151;
+.bin-option-button:hover {
+  background: #dfe3e8;
 }
 
-.score-item-sub.answer {
-  color: #b91c1c;
-  font-weight: 800;
+.bin-option-button:active {
+  transform: scale(0.98);
 }
 
-.score-empty {
-  padding: 14px;
-  border-radius: 14px;
-  background: #ffffff;
-  border: 1px dashed #93c5fd;
-  font-size: 17px;
-  color: #475569;
+/* 쓰레기통 이미지 자체는 3:4 비율에 가깝게 크게 보여주기 */
+.bin-option-image {
+  width: 118px;
+  height: 158px;
+  object-fit: contain;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
 }
 
+/* 이미지가 없을 때만 이모지 대체 */
+.bin-option-emoji {
+  width: 118px;
+  height: 158px;
+  border-radius: 20px;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 62px;
+}
 
-@media (max-width: 480px) {
-  .score-box {
-    padding: 16px 14px;
+.bin-option-name {
+  font-size: 21px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+/* 마지막 1개가 남으면 가운데 배치 */
+.bin-grid .bin-option-button:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+  justify-self: center;
+  width: min(100%, 250px);
+}
+
+@media (max-width: 768px), (pointer: coarse) {
+  .bin-modal-backdrop {
+    align-items: flex-end;
   }
 
-  .score-title {
-    font-size: 21px;
+  .bin-modal-card {
+    width: 100%;
+    max-width: 100%;
+    max-height: 90vh;
+    border-radius: 22px 22px 0 0;
+    padding: 20px 16px 22px;
   }
 
-  .score-headline {
-    font-size: 30px;
+  .bin-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
   }
 
-  .score-subline,
-  .score-section-title,
-  .score-item-main,
-  .score-item-sub,
-  .score-empty,
-  .score-note {
-    font-size: 19px;
+  .bin-option-button {
+    min-height: 174px;
+    padding: 12px 10px 10px;
+  }
+
+  .bin-option-image,
+  .bin-option-emoji {
+    width: 104px;
+    height: 140px;
+  }
+
+  .bin-option-emoji {
+    font-size: 56px;
+  }
+
+  .bin-option-name {
+    font-size: 18px;
+  }
+
+  .bin-grid .bin-option-button:last-child:nth-child(odd) {
+    width: min(100%, 220px);
   }
 }
 
+@media (max-width: 360px) {
+  .bin-option-button {
+    min-height: 160px;
+  }
 
-@media (max-width: 480px) {
-  .summary-reset-button {
-    width: fit-content;
-    margin-top: 6px;
-    padding: 9px 13px;
+  .bin-option-image,
+  .bin-option-emoji {
+    width: 96px;
+    height: 128px;
+  }
+
+  .bin-option-name {
     font-size: 17px;
+  }
+}
+
+/* 터치형 팝업 방식: 화면 하단 배출함 드롭 영역 제거 */
+.bin-drop-grid,
+.q19-bin-drop-grid {
+  display: none !important;
+}
+
+
+/* 선택 내용: 다시 선택 버튼 */
+.summary-reset-button {
+  width: auto;
+  min-height: 40px;
+  margin-top: 0;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.game-summary-row,
+.q19-summary-row {
+  grid-template-columns: minmax(90px, auto) 24px 1fr auto;
+}
+
+@media (max-width: 480px) {
+  .game-summary-row,
+  .q19-summary-row {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-reset-button {
+    width: 100%;
+    min-height: 48px;
+    font-size: 17px;
+  }
+}
+
+
+/* 배출함 이미지 카드 크기 최종 보정 */
+.bin-option-image {
+  width: 118px;
+  height: 158px;
+  object-fit: contain;
+}
+
+@media (max-width: 768px), (pointer: coarse) {
+  .bin-option-image {
+    width: 104px;
+    height: 140px;
   }
 }

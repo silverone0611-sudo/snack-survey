@@ -6,28 +6,28 @@ const STORAGE_KEY = "snack_survey_draft";
 const PACKAGING_ITEMS = [
   {
     id: "q3",
-    reasonId: "q4",
+    reasonId: null,
     title: "가격과 양이 같다고 가정할 때, 둘 중 어떤 과자를 구입할 것인가요?",
     image: "/images/q3.png",
     options: ["A 상자형", "B 봉지형"],
   },
   {
     id: "q5",
-    reasonId: "q6",
+    reasonId: null,
     title: "가격과 양이 같다고 가정할 때, 둘 중 어떤 과자를 구입할 것인가요?",
     image: "/images/q5.png",
     options: ["A 상자형", "B 원통형"],
   },
   {
     id: "q7",
-    reasonId: "q8",
+    reasonId: null,
     title: "가격과 양이 같다고 가정할 때, 둘 중 어떤 과자를 구입할 것인가요?",
     image: "/images/q7.png",
     options: ["A 상자형", "B 원통형"],
   },
   {
     id: "q9",
-    reasonId: "q10",
+    reasonId: null,
     title: "가격과 양이 같다고 가정할 때, 둘 중 어떤 과자를 구입할 것인가요?",
     image: "/images/q9.png",
     options: ["A 원통형", "B 봉지형"],
@@ -37,7 +37,7 @@ const PACKAGING_ITEMS = [
     reasonId: "q12",
     title: "가격과 양이 똑같은 과자라면, 어떤 포장을 가장 선호하나요?",
     image: "/images/q11.png",
-    options: ["봉지형 포장", "상자형 포장", "원통형 포장"],
+    options: ["봉지형", "상자형", "원통형"],
   },
   {
     id: "q13",
@@ -85,11 +85,41 @@ const POST_REASONS = [
 ];
 
 const BINS = [
-  { id: "general", label: "🗑️ 일반" },
-  { id: "plastic", label: "🧴 플라스틱" },
-  { id: "vinyl", label: "🛍️ 비닐" },
-  { id: "metal", label: "🥫 금속" },
-  { id: "paper", label: "📄 종이" },
+  {
+    id: "general",
+    icon: "🗑️",
+    name: "일반",
+    label: "🗑️ 일반",
+    image: "/images/bin_general.png",
+  },
+  {
+    id: "plastic",
+    icon: "🧴",
+    name: "플라스틱",
+    label: "🧴 플라스틱",
+    image: "/images/bin_plastic.png",
+  },
+  {
+    id: "vinyl",
+    icon: "🛍️",
+    name: "비닐",
+    label: "🛍️ 비닐",
+    image: "/images/bin_vinyl.png",
+  },
+  {
+    id: "metal",
+    icon: "🥫",
+    name: "금속",
+    label: "🥫 금속",
+    image: "/images/bin_metal.png",
+  },
+  {
+    id: "paper",
+    icon: "📄",
+    name: "종이",
+    label: "📄 종이",
+    image: "/images/bin_paper.png",
+  },
 ];
 
 const POUCH_HOTSPOTS = [
@@ -347,12 +377,6 @@ const GAME_ITEMS = [
   },
 ];
 
-
-const GAME_TOTAL_MAX_SCORE = GAME_ITEMS.reduce(
-  (sum, item) => sum + item.hotspots.length,
-  0
-);
-
 function getBinLabel(binId) {
   const bin = BINS.find((item) => item.id === binId);
   return bin ? bin.label : binId;
@@ -601,14 +625,14 @@ export default function App() {
   function nextPre() {
     const item = PACKAGING_ITEMS[preIndex];
     const choice = survey.preSurvey[item.id];
-    const reasons = survey.preSurvey[item.reasonId] || [];
+    const reasons = item.reasonId ? survey.preSurvey[item.reasonId] || [] : [];
 
     if (!choice) {
       alert("선택 문항에 응답하세요.");
       return;
     }
 
-    if (reasons.length === 0) {
+    if (item.reasonId && reasons.length === 0) {
       alert("선택 이유를 1개 이상 고르세요.");
       return;
     }
@@ -737,7 +761,7 @@ export default function App() {
     });
   }
 
-  function clearGamePartBin(partId) {
+  function removeGamePartSelection(partId) {
     const item = GAME_ITEMS[survey.game.currentIndex];
 
     setSurvey((prev) => {
@@ -745,16 +769,7 @@ export default function App() {
         ...(prev.game.selectedParts[item.id] || {}),
       };
 
-      if (partId === "__whole_package") {
-        delete itemParts.__whole_package;
-      } else if (itemParts[partId]) {
-        itemParts[partId] = {
-          ...itemParts[partId],
-          selectedBin: "",
-          selectedBinLabel: "",
-          selectedAt: new Date().toISOString(),
-        };
-      }
+      delete itemParts[partId];
 
       return {
         ...prev,
@@ -771,6 +786,12 @@ export default function App() {
 
   function chooseBin(binId) {
     if (!binModal) return;
+
+    if (binModal.type === "game") {
+      assignGamePartBin(binModal.partId, binId);
+      setBinModal(null);
+      return;
+    }
 
     if (binModal.type === "q19") {
       setSurvey((prev) => ({
@@ -795,6 +816,15 @@ export default function App() {
     setBinModal(null);
   }
 
+  function openGameBinModal(partId, partLabel) {
+    setBinModal({
+      type: "game",
+      partId,
+      title: `${partLabel}은 어디에 버릴까요?`,
+      desc: "알맞은 배출함을 선택하세요.",
+    });
+  }
+
   function finishCurrentGameItem() {
 
     const item = GAME_ITEMS[survey.game.currentIndex];
@@ -814,44 +844,22 @@ export default function App() {
         return;
       }
 
-      if (item.id === "q16_game_pouch") {
-        const correctBin = item.hotspots[0].correctBin;
-        const isCorrect = wholeAnswer.selectedBin === correctBin;
-        const log = {
-          stage: "pre_video_game",
-          selectionStatus: "whole_package_no_separation",
-          gameItemId: item.id,
-          gameItemName: item.name,
-          targetPartId: "whole_package",
-          targetPartLabel: "포장 전체",
-          selectedBin: wholeAnswer.selectedBin,
-          selectedBinLabel: wholeAnswer.selectedBinLabel,
-          correctBin,
-          correctBinLabel: getBinLabel(correctBin),
-          isCorrect,
-          eventTime: wholeAnswer.selectedAt,
-        };
-
-        moveToNextGameItem([log], isCorrect ? 1 : 0, 1);
-        return;
-      }
-
-      const logs = item.hotspots.map((part) => ({
+      const log = {
         stage: "pre_video_game",
         selectionStatus: "whole_package_no_separation",
         gameItemId: item.id,
         gameItemName: item.name,
-        targetPartId: part.id,
-        targetPartLabel: part.label,
+        targetPartId: "whole_package",
+        targetPartLabel: "포장 전체(분리할 부분 없음)",
         selectedBin: wholeAnswer.selectedBin,
         selectedBinLabel: wholeAnswer.selectedBinLabel,
-        correctBin: part.correctBin,
-        correctBinLabel: getBinLabel(part.correctBin),
+        correctBin: "",
+        correctBinLabel: "채점 제외",
         isCorrect: false,
         eventTime: wholeAnswer.selectedAt,
-      }));
+      };
 
-      moveToNextGameItem(logs, 0, item.hotspots.length);
+      moveToNextGameItem([log], 0, 0);
       return;
     }
 
@@ -931,18 +939,7 @@ export default function App() {
       return;
     }
 
-    setStep("scoreReveal");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  function goToVideoFromScore() {
     setStep("video");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  function goToPostFromQ19Score() {
-    setStep("post");
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function finishVideo() {
@@ -999,28 +996,29 @@ export default function App() {
     }));
   }
 
-  function clearQ19PartBin(partId) {
+  function removeQ19PartSelection(partId) {
     setSurvey((prev) => {
-      const selectedParts = {
+      const nextSelectedParts = {
         ...prev.q19Quiz.selectedParts,
       };
 
-      delete selectedParts[partId];
+      delete nextSelectedParts[partId];
 
       if (partId === "body_print") {
-        delete selectedParts.body_paper;
-        delete selectedParts.body_foil;
+        delete nextSelectedParts.body_paper;
+        delete nextSelectedParts.body_foil;
       }
 
       if (partId === "body_paper") {
-        delete selectedParts.body_foil;
+        delete nextSelectedParts.body_foil;
       }
 
       return {
         ...prev,
         q19Quiz: {
           ...prev.q19Quiz,
-          selectedParts,
+          selectedParts: nextSelectedParts,
+          finalized: false,
         },
       };
     });
@@ -1086,7 +1084,7 @@ export default function App() {
       },
     }));
 
-    setStep("q19ScoreReveal");
+    setStep("post");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -1204,8 +1202,9 @@ export default function App() {
             chooseGameMode={chooseGameMode}
             tapGamePart={tapGamePart}
             assignGamePartBin={assignGamePartBin}
-            clearGamePartBin={clearGamePartBin}
+            removeGamePartSelection={removeGamePartSelection}
             finishCurrentGameItem={finishCurrentGameItem}
+            openGameBinModal={openGameBinModal}
           />
         )}
 
@@ -1217,10 +1216,6 @@ export default function App() {
           />
         )}
 
-        {step === "scoreReveal" && (
-          <ScoreRevealStep game={survey.game} goToVideoFromScore={goToVideoFromScore} />
-        )}
-
         {step === "video" && (
           <VideoStep finishVideo={finishVideo} />
         )}
@@ -1230,15 +1225,9 @@ export default function App() {
             q19Quiz={survey.q19Quiz}
             getQ19StageKey={getQ19StageKey}
             assignQ19PartBin={assignQ19PartBin}
-            clearQ19PartBin={clearQ19PartBin}
+            removeQ19PartSelection={removeQ19PartSelection}
+            openQ19BinModal={tapQ19Part}
             finishQ19Quiz={finishQ19Quiz}
-          />
-        )}
-
-        {step === "q19ScoreReveal" && (
-          <Q19ScoreRevealStep
-            q19Quiz={survey.q19Quiz}
-            goToPostFromQ19Score={goToPostFromQ19Score}
           />
         )}
 
@@ -1289,7 +1278,7 @@ function PreferenceStep({
   nextPre,
 }) {
   const choice = survey.preSurvey[item.id] || "";
-  const reasons = survey.preSurvey[item.reasonId] || [];
+  const reasons = item.reasonId ? survey.preSurvey[item.reasonId] || [] : [];
 
   return (
     <>
@@ -1310,7 +1299,7 @@ function PreferenceStep({
           </div>
         )}
 
-        <div className="options">
+        <div className={`options choice-options option-count-${item.options.length}`}>
           {item.options.map((option) => (
             <label key={option}>
               <input
@@ -1324,23 +1313,27 @@ function PreferenceStep({
           ))}
         </div>
 
-        <h3>
-          {item.reasonId.replace("q", "")}. 그렇게 선택한 이유는
-          무엇입니까?
-        </h3>
+        {item.reasonId && (
+          <>
+            <h3>
+              {item.reasonId.replace("q", "")}. 그렇게 선택한 이유는
+              무엇입니까?
+            </h3>
 
-        <div className="options">
-          {REASONS.map((reason) => (
-            <label key={reason}>
-              <input
-                type="checkbox"
-                checked={reasons.includes(reason)}
-                onChange={() => togglePreReason(item.reasonId, reason)}
-              />
-              {reason}
-            </label>
-          ))}
-        </div>
+            <div className="options">
+              {REASONS.map((reason) => (
+                <label key={reason}>
+                  <input
+                    type="checkbox"
+                    checked={reasons.includes(reason)}
+                    onChange={() => togglePreReason(item.reasonId, reason)}
+                  />
+                  {reason}
+                </label>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       <div className="button-row">
@@ -1365,21 +1358,21 @@ function ExperienceStep({ survey, updateExperience, finishExperience }) {
       </p>
 
       <FrequencyQuestion
-        title="15-1. 봉지형 포장"
+        title="15-1. 봉지형"
         name="q15_pouch"
         value={survey.experience.q15_pouch}
         onChange={(value) => updateExperience("q15_pouch", value)}
       />
 
       <FrequencyQuestion
-        title="15-2. 상자형 포장"
+        title="15-2. 상자형"
         name="q15_box"
         value={survey.experience.q15_box}
         onChange={(value) => updateExperience("q15_box", value)}
       />
 
       <FrequencyQuestion
-        title="15-3. 원통형 포장"
+        title="15-3. 원통형"
         name="q15_cylinder"
         value={survey.experience.q15_cylinder}
         onChange={(value) => updateExperience("q15_cylinder", value)}
@@ -1414,18 +1407,24 @@ function FrequencyQuestion({ title, name, value, onChange }) {
   );
 }
 
+function useIsMobileLike() {
+  return true;
+}
+
 function GameStep({
   game,
   chooseGameMode,
   tapGamePart,
   assignGamePartBin,
-  clearGamePartBin,
+  removeGamePartSelection,
   finishCurrentGameItem,
+  openGameBinModal,
 }) {
   const item = GAME_ITEMS[game.currentIndex];
   const [activePieceId, setActivePieceId] = useState("");
   const [draggingPieceId, setDraggingPieceId] = useState("");
   const [dragPreview, setDragPreview] = useState(null);
+  const isMobileLike = useIsMobileLike();
 
   const mode = item ? game.modes[item.id] || "" : "";
   const selectedMap = item ? game.selectedParts[item.id] || {} : {};
@@ -1473,14 +1472,14 @@ function GameStep({
           ]
         : []
       : item.hotspots
-          .filter((part) => selectedMap[part.id]?.selectedBinLabel)
+          .filter((part) => selectedMap[part.id])
           .map((part) => {
             const answer = selectedMap[part.id];
 
             return {
               partId: part.id,
               partLabel: part.label,
-              binLabel: answer.selectedBinLabel,
+              binLabel: answer?.selectedBinLabel || "배출함 미선택",
             };
           });
 
@@ -1569,8 +1568,7 @@ function GameStep({
 
       <p className="desc">
         포장 이미지를 보고, 버릴 때 어떻게 처리할지 선택하세요.
-        분리할 부분이 없다고 생각하면 ‘분리할 부분 없음’을 선택하세요.
-        분리할 부분이 있다고 생각하면 ‘분리할 부분 있음’을 선택한 뒤 이미지에서 해당 부분을 터치하세요.
+        버리고자 하는 부분을 터치하면 배출함 선택창이 뜹니다.
       </p>
 
       <div className="status">
@@ -1593,7 +1591,9 @@ function GameStep({
           item={item}
           selected={activePieceId === "__whole_package"}
           removed={!!selectedMap.__whole_package?.selectedBin}
+          isMobileLike={isMobileLike}
           onSelect={() => setActivePieceId("__whole_package")}
+          onMobileTap={() => openGameBinModal("__whole_package", "포장 전체")}
           onDragStart={(event) => startDragPiece("__whole_package", event)}
           onDragEnd={() => setDraggingPieceId("")}
         />
@@ -1602,7 +1602,9 @@ function GameStep({
           item={item}
           selectedMap={selectedMap}
           activePieceId={activePieceId}
+          isMobileLike={isMobileLike}
           onSelect={(partId) => setActivePieceId(partId)}
+          onMobileTap={(part) => openGameBinModal(part.id, part.label)}
           onDragStart={(partId, event) => startDragPiece(partId, event)}
           onDragEnd={() => setDraggingPieceId("")}
         />
@@ -1614,7 +1616,9 @@ function GameStep({
                 key={piece.id}
                 piece={piece}
                 isActive={activePieceId === piece.id}
+                isMobileLike={isMobileLike}
                 onSelect={() => setActivePieceId(piece.id)}
+                onMobileTap={() => openGameBinModal(piece.id, piece.label)}
                 onDragStart={() => {
                   setDraggingPieceId(piece.id);
                   setActivePieceId(piece.id);
@@ -1678,38 +1682,11 @@ function GameStep({
 
       {mode && (
         <>
-          <div className="bin-drop-grid">
-            {BINS.map((bin) => (
-              <div
-                key={bin.id}
-                data-bin-id={bin.id}
-                className="bin-drop-card"
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={(event) => {
-                  event.preventDefault();
-                  const droppedId =
-                    event.dataTransfer.getData("text/plain") || draggingPieceId;
-                  handleDropOnBin(bin.id, droppedId);
-                }}
-                onClick={() => {
-                  if (activePieceId) {
-                    handleDropOnBin(bin.id, activePieceId);
-                  }
-                }}
-              >
-                <div className="bin-drop-icon">{bin.label}</div>
-                <div className="bin-drop-text">여기에 놓기 / 누르기</div>
-              </div>
-            ))}
-          </div>
 
           {selectedPartsSummary.length > 0 && (
             <GameSelectionSummary
               items={selectedPartsSummary}
-              onReset={(partId) => {
-                clearGamePartBin(partId);
-                setActivePieceId(partId === "__whole_package" ? "__whole_package" : partId);
-              }}
+              onReset={removeGamePartSelection}
             />
           )}
 
@@ -1788,7 +1765,9 @@ function WholePackageImage({
   item,
   selected,
   removed,
+  isMobileLike,
   onSelect,
+  onMobileTap,
   onDragStart,
   onDragEnd,
 }) {
@@ -1804,14 +1783,29 @@ function WholePackageImage({
             className={selected ? "whole-package-image active" : "whole-package-image"}
             src={item.image}
             alt={`${item.name} 전체`}
-            draggable
-            onClick={onSelect}
+            draggable={!isMobileLike}
+            onClick={(event) => {
+              if (isMobileLike) {
+                event.preventDefault();
+                onMobileTap();
+                return;
+              }
+
+              onSelect();
+            }}
             onPointerDown={(event) => {
+              if (isMobileLike) return;
+
               event.preventDefault();
               onSelect();
               onDragStart(event);
             }}
             onDragStart={(event) => {
+              if (isMobileLike) {
+                event.preventDefault();
+                return;
+              }
+
               event.dataTransfer.setData("text/plain", "__whole_package");
               onDragStart(event);
             }}
@@ -1827,7 +1821,9 @@ function MaskedGameImage({
   item,
   selectedMap,
   activePieceId,
+  isMobileLike,
   onSelect,
+  onMobileTap,
   onDragStart,
   onDragEnd,
 }) {
@@ -1868,8 +1864,10 @@ function MaskedGameImage({
                 key={`hit-${part.id}`}
                 part={part}
                 selected={activePieceId === part.id}
+                isMobileLike={isMobileLike}
                 onSelect={() => onSelect(part.id)}
-                onDragStart={() => onDragStart(part.id)}
+                onMobileTap={() => onMobileTap(part)}
+                onDragStart={(event) => onDragStart(part.id, event)}
                 onDragEnd={onDragEnd}
               />
             ))}
@@ -1900,21 +1898,38 @@ function MaskShape({ part }) {
 function MaskHitShape({
   part,
   selected,
+  isMobileLike,
   onSelect,
+  onMobileTap,
   onDragStart,
   onDragEnd,
 }) {
   const className = selected ? "mask-game-hit-shape selected" : "mask-game-hit-shape";
   const commonProps = {
     className,
-    draggable: true,
-    onClick: onSelect,
+    draggable: !isMobileLike,
+    onClick: (event) => {
+      if (isMobileLike) {
+        event.preventDefault();
+        onMobileTap();
+        return;
+      }
+
+      onSelect();
+    },
     onPointerDown: (event) => {
+      if (isMobileLike) return;
+
       event.preventDefault();
       onSelect();
       onDragStart(event);
     },
     onDragStart: (event) => {
+      if (isMobileLike) {
+        event.preventDefault();
+        return;
+      }
+
       event.dataTransfer.setData("text/plain", part.id);
       onDragStart(event);
     },
@@ -1960,7 +1975,9 @@ function GameSelectionSummary({ items, onReset }) {
 function LayerPiece({
   piece,
   isActive,
+  isMobileLike,
   onSelect,
+  onMobileTap,
   onDragStart,
   onDragEnd,
 }) {
@@ -1973,9 +1990,22 @@ function LayerPiece({
       }
       src={piece.pieceImage}
       alt={piece.label}
-      draggable
-      onClick={onSelect}
+      draggable={!isMobileLike}
+      onClick={(event) => {
+        if (isMobileLike) {
+          event.preventDefault();
+          onMobileTap();
+          return;
+        }
+
+        onSelect();
+      }}
       onDragStart={(event) => {
+        if (isMobileLike) {
+          event.preventDefault();
+          return;
+        }
+
         event.dataTransfer.setData("text/plain", piece.id);
         onDragStart();
       }}
@@ -2036,9 +2066,11 @@ function BinModal({ title, desc, chooseBin, close }) {
 
         <div className="bin-grid">
           {BINS.map((bin) => (
-            <button key={bin.id} type="button" onClick={() => chooseBin(bin.id)}>
-              {bin.label}
-            </button>
+            <BinOption
+              key={bin.id}
+              bin={bin}
+              onChoose={() => chooseBin(bin.id)}
+            />
           ))}
         </div>
 
@@ -2050,157 +2082,26 @@ function BinModal({ title, desc, chooseBin, close }) {
   );
 }
 
-function formatSelectedBinLabel(log) {
-  return log.selectedBinLabel || "선택 안 함";
-}
-
-function GameScoreSummary({ game }) {
-  const score = game?.score || 0;
-  const maxScore = game?.maxScore || GAME_TOTAL_MAX_SCORE;
-  const percent = maxScore > 0 ? Math.round((score / maxScore) * 1000) / 10 : 0;
-  const logs = game?.logs || [];
-  const correctLogs = logs.filter((log) => log.isCorrect);
-  const wrongLogs = logs.filter((log) => !log.isCorrect);
+function BinOption({ bin, onChoose }) {
+  const [imageError, setImageError] = useState(false);
 
   return (
-    <div className="score-box">
-      <div className="score-title">분리배출 게임 점수 공개</div>
-
-      <div className="score-headline">
-        <strong>{score}점</strong> / 만점 {maxScore}점
-      </div>
-      <div className="score-subline">정답률 {percent}%</div>
-
-      <div className="score-note">
-        만점 기준: 봉지형 1점 + 상자형 2점 + 원통형 3점 = 총 6점
-      </div>
-
-      <div className="score-section">
-        <div className="score-section-title">맞힌 것 ({correctLogs.length})</div>
-        {correctLogs.length > 0 ? (
-          <div className="score-list">
-            {correctLogs.map((log, index) => (
-              <div className="score-row correct" key={`correct-${index}`}>
-                <div className="score-item-main">
-                  {log.gameItemName} · {log.targetPartLabel}
-                </div>
-                <div className="score-item-sub">
-                  내 선택: {formatSelectedBinLabel(log)}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="score-empty">아직 맞힌 항목이 없습니다.</div>
-        )}
-      </div>
-
-      <div className="score-section">
-        <div className="score-section-title">틀린 것 ({wrongLogs.length})</div>
-        {wrongLogs.length > 0 ? (
-          <div className="score-list">
-            {wrongLogs.map((log, index) => (
-              <div className="score-row wrong" key={`wrong-${index}`}>
-                <div className="score-item-main">
-                  {log.gameItemName} · {log.targetPartLabel}
-                </div>
-                <div className="score-item-sub">
-                  내 선택: {formatSelectedBinLabel(log)}
-                </div>
-                <div className="score-item-sub answer">
-                  정답: {log.correctBinLabel}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="score-empty">틀린 항목이 없습니다.</div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function Q19QuizScoreSummary({ q19Quiz }) {
-  const score = q19Quiz?.score || 0;
-  const maxScore = q19Quiz?.maxScore || Q19_PART_DEFS.length;
-  const percent = maxScore > 0 ? Math.round((score / maxScore) * 1000) / 10 : 0;
-  const logs = q19Quiz?.logs || [];
-  const correctLogs = logs.filter((log) => log.isCorrect);
-  const wrongLogs = logs.filter((log) => !log.isCorrect);
-
-  return (
-    <div className="score-box">
-      <div className="score-title">영상 후 터치형 퀴즈 정답 확인</div>
-
-      <div className="score-headline">
-        <strong>{score}점</strong> / 만점 {maxScore}점
-      </div>
-      <div className="score-subline">정답률 {percent}%</div>
-
-      <div className="score-note">
-        만점 기준: 플라스틱 뚜껑, 알루미늄 바닥, 겉 인쇄 코팅면,
-        종이 부분, 은박 코팅 부분을 각각 올바른 배출함에 넣으면 총 5점입니다.
-      </div>
-
-      <div className="score-section">
-        <div className="score-section-title">맞힌 것 ({correctLogs.length})</div>
-        {correctLogs.length > 0 ? (
-          <div className="score-list">
-            {correctLogs.map((log, index) => (
-              <div className="score-row correct" key={`q19-correct-${index}`}>
-                <div className="score-item-main">{log.targetPartLabel}</div>
-                <div className="score-item-sub">
-                  내 선택: {formatSelectedBinLabel(log)}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="score-empty">아직 맞힌 항목이 없습니다.</div>
-        )}
-      </div>
-
-      <div className="score-section">
-        <div className="score-section-title">틀린 것 ({wrongLogs.length})</div>
-        {wrongLogs.length > 0 ? (
-          <div className="score-list">
-            {wrongLogs.map((log, index) => (
-              <div className="score-row wrong" key={`q19-wrong-${index}`}>
-                <div className="score-item-main">{log.targetPartLabel}</div>
-                <div className="score-item-sub">
-                  내 선택: {formatSelectedBinLabel(log)}
-                </div>
-                <div className="score-item-sub answer">
-                  정답: {log.correctBinLabel}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="score-empty">틀린 항목이 없습니다.</div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function Q19ScoreRevealStep({ q19Quiz, goToPostFromQ19Score }) {
-  return (
-    <>
-      <h2>9단계. 영상 후 퀴즈 정답 확인</h2>
-
-      <p className="desc">
-        영상 후 터치형 퀴즈의 점수와 정답을 확인하세요.
-        이 내용을 확인한 뒤 사후 구매의향 문항으로 이동합니다.
-      </p>
-
-      <Q19QuizScoreSummary q19Quiz={q19Quiz} />
-
-      <button type="button" onClick={goToPostFromQ19Score}>
-        사후 구매의향 문항으로 이동
-      </button>
-    </>
+    <button type="button" className="bin-option-button" onClick={onChoose}>
+      {bin.image && !imageError ? (
+        <img
+          className="bin-option-image"
+          src={bin.image}
+          alt=""
+          aria-hidden="true"
+          onError={() => setImageError(true)}
+        />
+      ) : (
+        <span className="bin-option-emoji" aria-hidden="true">
+          {bin.icon}
+        </span>
+      )}
+      <span className="bin-option-name">{bin.name}</span>
+    </button>
   );
 }
 
@@ -2224,26 +2125,7 @@ function AfterGameStep({ survey, updateAfterGame, finishAfterGame }) {
       />
 
       <button type="button" onClick={finishAfterGame}>
-        점수 확인하기
-      </button>
-    </>
-  );
-}
-
-function ScoreRevealStep({ game, goToVideoFromScore }) {
-  return (
-    <>
-      <h2>6단계. 분리배출 게임 점수 공개</h2>
-
-      <p className="desc">
-        아래에서 게임 점수와 맞은 항목, 틀린 항목을 확인한 뒤,
-        올바른 분리배출 방법 영상을 보세요.
-      </p>
-
-      <GameScoreSummary game={game} />
-
-      <button type="button" onClick={goToVideoFromScore}>
-        올바른 분리배출 방법 영상 보기
+        영상 시청으로 이동
       </button>
     </>
   );
@@ -2276,11 +2158,10 @@ function VideoStep({ finishVideo }) {
 
   return (
     <>
-      <h2>7단계. 올바른 분리배출 방법 영상</h2>
+      <h2>6단계. 영상 시청</h2>
 
       <p className="desc">
-        아래 영상을 통해 원통형 포장을 올바르게 분리배출하는 방법을 확인하세요.
-        영상을 본 뒤, 영상 후 터치형 퀴즈로 이동합니다.
+        아래 영상을 시청한 뒤, 영상 후 터치형 퀴즈로 이동하세요.
       </p>
 
       <div className="video-box">
@@ -2332,12 +2213,14 @@ function Q19QuizStep({
   q19Quiz,
   getQ19StageKey,
   assignQ19PartBin,
-  clearQ19PartBin,
+  removeQ19PartSelection,
+  openQ19BinModal,
   finishQ19Quiz,
 }) {
   const [activePieceId, setActivePieceId] = useState("");
   const [draggingPieceId, setDraggingPieceId] = useState("");
   const [dragPreview, setDragPreview] = useState(null);
+  const isMobileLike = useIsMobileLike();
   const selectedParts = q19Quiz.selectedParts;
   const stageKey = getQ19StageKey(selectedParts);
   const baseImage = getQ19BaseImage(selectedParts);
@@ -2366,11 +2249,11 @@ function Q19QuizStep({
   );
 
   const selectedSummary = Q19_PART_DEFS.filter(
-    (part) => selectedParts[part.id]?.selectedBinLabel
+    (part) => selectedParts[part.id]
   ).map((part) => ({
     partId: part.id,
     partLabel: part.label,
-    binLabel: selectedParts[part.id].selectedBinLabel,
+    binLabel: selectedParts[part.id].selectedBinLabel || "배출함 미선택",
   }));
 
   function getQ19DragPiece(partId) {
@@ -2441,11 +2324,11 @@ function Q19QuizStep({
 
   return (
     <>
-      <h2>8단계. 영상 후 터치형 퀴즈</h2>
+      <h2>7단계. 영상 후 터치형 퀴즈</h2>
 
       <p className="desc">
-        다시 해 보는 퀴즈입니다. 분리할 부분을 직접 선택해 배출함에 넣으세요.
-        모바일에서는 조각을 먼저 누른 뒤, 배출함을 눌러도 됩니다.
+        다시 해 보는 퀴즈입니다.
+        버리고자 하는 부분을 터치하면 배출함 선택창이 뜹니다.
       </p>
 
       <div className="layer-game-box">
@@ -2491,7 +2374,9 @@ function Q19QuizStep({
                   key={`hit-${piece.id}`}
                   piece={piece}
                   selected={activePieceId === piece.id}
+                  isMobileLike={isMobileLike}
                   onSelect={() => setActivePieceId(piece.id)}
+                  onMobileTap={() => openQ19BinModal(piece.id)}
                   onDragStart={(event) => startQ19Drag(piece.id, event)}
                   onDragEnd={() => {
                     setDraggingPieceId("");
@@ -2509,30 +2394,6 @@ function Q19QuizStep({
         </div>
       </div>
 
-      <div className="bin-drop-grid q19-bin-drop-grid">
-        {BINS.map((bin) => (
-          <div
-            key={bin.id}
-            data-bin-id={bin.id}
-            className="bin-drop-card q19-bin-drop-card"
-            onDragOver={(event) => event.preventDefault()}
-            onDrop={(event) => {
-              event.preventDefault();
-              const droppedId =
-                event.dataTransfer.getData("text/plain") || draggingPieceId;
-              handleDropOnBin(bin.id, droppedId);
-            }}
-            onClick={() => {
-              if (activePieceId) {
-                handleDropOnBin(bin.id, activePieceId);
-              }
-            }}
-          >
-            <div className="bin-drop-icon">{bin.label}</div>
-            <div className="bin-drop-text">여기에 놓기 / 누르기</div>
-          </div>
-        ))}
-      </div>
 
       <div className="q19-summary-box">
         <div className="q19-summary-title">선택 내용</div>
@@ -2547,10 +2408,7 @@ function Q19QuizStep({
                 <button
                   type="button"
                   className="summary-reset-button"
-                  onClick={() => {
-                    clearQ19PartBin(item.partId);
-                    setActivePieceId(item.partId);
-                  }}
+                  onClick={() => removeQ19PartSelection(item.partId)}
                 >
                   다시 선택
                 </button>
@@ -2588,21 +2446,38 @@ function Q19MaskShape({ piece }) {
 function Q19HitShape({
   piece,
   selected,
+  isMobileLike,
   onSelect,
+  onMobileTap,
   onDragStart,
   onDragEnd,
 }) {
   const className = selected ? "q19-hit-shape selected" : "q19-hit-shape";
   const commonProps = {
     className,
-    draggable: true,
-    onClick: onSelect,
+    draggable: !isMobileLike,
+    onClick: (event) => {
+      if (isMobileLike) {
+        event.preventDefault();
+        onMobileTap();
+        return;
+      }
+
+      onSelect();
+    },
     onPointerDown: (event) => {
+      if (isMobileLike) return;
+
       event.preventDefault();
       onSelect();
       onDragStart(event);
     },
     onDragStart: (event) => {
+      if (isMobileLike) {
+        event.preventDefault();
+        return;
+      }
+
       event.dataTransfer.setData("text/plain", piece.id);
       onDragStart(event);
     },
@@ -2640,7 +2515,7 @@ function PostSurveyStep({
 }) {
   return (
     <>
-      <h2>10단계. 사후 구매의향</h2>
+      <h2>8단계. 사후 구매의향</h2>
 
       <div className="question">
         <h3>
