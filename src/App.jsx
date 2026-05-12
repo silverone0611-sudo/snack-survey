@@ -199,6 +199,21 @@ const PRINGLES_HOTSPOTS = [
     pieceImage: "/images/piece_cylinder_lid.png",
   },
   {
+    id: "inner_lid",
+    label: "속뚜껑",
+    correctBin: "general",
+    z: 90,
+    svg: {
+      type: "polygon",
+      points:
+        "150,65 260,25 395,45 510,125 575,250 555,385 " +
+        "465,490 335,530 210,490 130,390 105,260",
+    },
+    pieceImage: "/images/piece_q19_inner_lid.png",
+    className: "q19-inner-lid-piece",
+    overlayInStage: true,
+  },
+  {
     id: "bottom",
     label: "알루미늄 바닥",
     correctBin: "metal",
@@ -223,6 +238,10 @@ const Q19_LID_HIT = {
   ...PRINGLES_HOTSPOTS.find((part) => part.id === "lid"),
 };
 
+const Q19_INNER_LID_HIT = {
+  ...PRINGLES_HOTSPOTS.find((part) => part.id === "inner_lid"),
+};
+
 const Q19_BOTTOM_ATTACHED_HIT = {
   ...PRINGLES_HOTSPOTS.find((part) => part.id === "bottom"),
 };
@@ -243,6 +262,7 @@ const Q19_BOTTOM_DETACHED_HIT = {
 
 const Q19_PART_DEFS = [
   { id: "lid", label: "플라스틱 뚜껑", correctBin: "plastic" },
+  { id: "inner_lid", label: "속뚜껑", correctBin: "general" },
   { id: "bottom", label: "알루미늄 바닥", correctBin: "metal" },
   { id: "body_print", label: "겉 인쇄 코팅면", correctBin: "general" },
   { id: "body_paper", label: "종이 부분", correctBin: "paper" },
@@ -265,6 +285,14 @@ const Q19_LAYER_BASE = [
     pieceImage: "/images/piece_q19_lid.png",
     className: "q19-lid-piece",
     hit: Q19_LID_HIT,
+  },
+  {
+    id: "inner_lid",
+    label: "속뚜껑",
+    correctBin: "general",
+    pieceImage: "/images/piece_q19_inner_lid.png",
+    className: "q19-inner-lid-piece",
+    hit: Q19_INNER_LID_HIT,
   },
 ];
 
@@ -371,6 +399,11 @@ const GAME_ITEMS = [
 function getBinLabel(binId) {
   const bin = BINS.find((item) => item.id === binId);
   return bin ? bin.label : binId;
+}
+
+function getPercent(score, maxScore) {
+  if (!maxScore) return 0;
+  return Math.round((score / maxScore) * 1000) / 10;
 }
 
 function makeRespondentNo() {
@@ -931,7 +964,8 @@ export default function App() {
       return;
     }
 
-    setStep("video");
+    setStep("gameResult");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function finishVideo() {
@@ -1076,7 +1110,7 @@ export default function App() {
       },
     }));
 
-    setStep("post");
+    setStep("q19Result");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -1120,7 +1154,7 @@ export default function App() {
       <section className="card">
         {step === "intro" && (
           <>
-            <h1>원통형 포장에 대한 편의성·환경성 인식과 구매 태도 조사</h1>
+            <h1>과자 포장에 대한 인식과 태도 조사</h1>
 
             <p className="desc">
               과자 포장 유형에 대한 선호도, 포장 형태별 이용 경험,
@@ -1208,6 +1242,16 @@ export default function App() {
           />
         )}
 
+        {step === "gameResult" && (
+          <GameResultStep
+            game={survey.game}
+            onNext={() => {
+              setStep("video");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          />
+        )}
+
         {step === "video" && <VideoStep finishVideo={finishVideo} />}
 
         {step === "quiz" && (
@@ -1218,6 +1262,16 @@ export default function App() {
             removeQ19PartSelection={removeQ19PartSelection}
             openQ19BinModal={tapQ19Part}
             finishQ19Quiz={finishQ19Quiz}
+          />
+        )}
+
+        {step === "q19Result" && (
+          <Q19ResultStep
+            q19Quiz={survey.q19Quiz}
+            onNext={() => {
+              setStep("post");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
           />
         )}
 
@@ -1818,6 +1872,20 @@ function MaskedGameImage({
       <div className="layer-stage mask-game-stage">
         <img className="mask-game-base-image" src={item.image} alt={item.name} />
 
+        {selectableParts
+          .filter((part) => part.overlayInStage && part.pieceImage)
+          .sort((a, b) => (a.z || 0) - (b.z || 0))
+          .map((part) => (
+            <img
+              key={`overlay-${part.id}`}
+              className={`mask-game-overlay-image ${part.className || ""}`}
+              src={part.pieceImage}
+              alt=""
+              aria-hidden="true"
+              draggable={false}
+            />
+          ))}
+
         <svg
           className="mask-game-mask-svg"
           viewBox={item.viewBox || "0 0 1000 1000"}
@@ -2080,6 +2148,129 @@ function BinOption({ bin, onChoose }) {
   );
 }
 
+
+function ResultItem({ log, wrong }) {
+  return (
+    <div className={wrong ? "result-item result-item-wrong" : "result-item"}>
+      <div className="result-item-title">
+        {log.gameItemName} · {log.targetPartLabel}
+      </div>
+      <div className="result-item-line">
+        내 선택: <strong>{log.selectedBinLabel || "선택 안 함"}</strong>
+      </div>
+      <div className={wrong ? "result-item-line result-wrong-text" : "result-item-line"}>
+        정답: <strong>{log.correctBinLabel || "정답 없음"}</strong>
+      </div>
+    </div>
+  );
+}
+
+function ResultSection({ title, logs, wrong }) {
+  return (
+    <div className="result-section">
+      <div className={wrong ? "result-section-title result-wrong-text" : "result-section-title"}>
+        {title} ({logs.length})
+      </div>
+
+      {logs.length > 0 ? (
+        <div className="result-list">
+          {logs.map((log, index) => (
+            <ResultItem
+              key={`${log.gameItemId}-${log.targetPartId}-${index}`}
+              log={log}
+              wrong={wrong}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="result-empty">
+          해당 항목이 없습니다.
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ResultScoreScreen({
+  title,
+  desc,
+  score,
+  maxScore,
+  logs,
+  standardText,
+  nextButtonText,
+  onNext,
+}) {
+  const percent = getPercent(score, maxScore);
+  const scoredLogs = logs.filter((log) => log.correctBinLabel !== "채점 제외");
+  const correctLogs = scoredLogs.filter((log) => log.isCorrect);
+  const wrongLogs = scoredLogs.filter((log) => !log.isCorrect);
+  const excludedLogs = logs.filter((log) => log.correctBinLabel === "채점 제외");
+
+  return (
+    <>
+      <h2>{title}</h2>
+      <p className="desc">{desc}</p>
+
+      <div className="result-score-card">
+        <div className="result-score-label">점수</div>
+        <div className="result-score-main">
+          <strong>{score}</strong>
+          <span>/ 만점 {maxScore}점</span>
+        </div>
+        <div className="result-score-percent">정답률 {percent}%</div>
+
+        {standardText && (
+          <div className="result-standard">
+            {standardText}
+          </div>
+        )}
+      </div>
+
+      <ResultSection title="맞힌 것" logs={correctLogs} />
+      <ResultSection title="틀린 것" logs={wrongLogs} wrong />
+
+      {excludedLogs.length > 0 && (
+        <ResultSection title="채점 제외" logs={excludedLogs} />
+      )}
+
+      <button type="button" onClick={onNext}>
+        {nextButtonText}
+      </button>
+    </>
+  );
+}
+
+function GameResultStep({ game, onNext }) {
+  return (
+    <ResultScoreScreen
+      title="6단계. 분리배출 게임 점수 공개"
+      desc="아래에서 게임 점수와 맞은 항목, 틀린 항목을 확인한 뒤 영상을 보세요."
+      score={game.score}
+      maxScore={game.maxScore}
+      logs={game.logs}
+      standardText="기준: 봉지 1점 + 상자 2점 + 원통 4점 = 총 7점"
+      nextButtonText="올바른 분리배출 방법 영상 보기"
+      onNext={onNext}
+    />
+  );
+}
+
+function Q19ResultStep({ q19Quiz, onNext }) {
+  return (
+    <ResultScoreScreen
+      title="9단계. 영상 후 분리배출 퀴즈 결과"
+      desc="영상 시청 후 다시 도전한 분리배출 퀴즈 결과입니다."
+      score={q19Quiz.score}
+      maxScore={q19Quiz.maxScore}
+      logs={q19Quiz.logs}
+      standardText="기준: 겉 인쇄 코팅면, 종이 부분, 은박 코팅 부분, 플라스틱 뚜껑, 속뚜껑, 알루미늄 바닥 = 총 6점"
+      nextButtonText="사후 구매의향 문항으로 이동"
+      onNext={onNext}
+    />
+  );
+}
+
 function AfterGameStep({ survey, updateAfterGame, finishAfterGame }) {
   return (
     <>
@@ -2100,7 +2291,7 @@ function AfterGameStep({ survey, updateAfterGame, finishAfterGame }) {
       />
 
       <button type="button" onClick={finishAfterGame}>
-        영상 시청으로 이동
+        점수와 정답 확인으로 이동
       </button>
     </>
   );
@@ -2134,7 +2325,7 @@ function VideoStep({ finishVideo }) {
 
   return (
     <>
-      <h2>6단계. 영상 시청</h2>
+      <h2>7단계. 영상 시청</h2>
 
       <p className="desc">
         아래 영상을 끝까지 시청한 뒤, 영상 후 터치형 퀴즈로 이동하세요.
@@ -2209,7 +2400,10 @@ function Q19QuizStep({
   const assignedMaskPieces = visiblePieces.filter(
     (piece) =>
       selectedParts[piece.id]?.selectedBin &&
-      (piece.id === "lid" || piece.id === "bottom" || piece.id === "body_foil")
+      (piece.id === "lid" ||
+        piece.id === "inner_lid" ||
+        piece.id === "bottom" ||
+        piece.id === "body_foil")
   );
 
   const selectedSummary = Q19_PART_DEFS.filter((part) => selectedParts[part.id]).map(
@@ -2288,7 +2482,7 @@ function Q19QuizStep({
 
   return (
     <>
-      <h2>7단계. 영상 후 터치형 퀴즈</h2>
+      <h2>8단계. 영상 후 터치형 퀴즈</h2>
 
       <p className="desc">
         다시 해 보는 퀴즈입니다.
@@ -2462,7 +2656,7 @@ function PostSurveyStep({
 }) {
   return (
     <>
-      <h2>8단계. 사후 구매의향</h2>
+      <h2>10단계. 사후 구매의향</h2>
 
       <div className="question">
         <h3>
