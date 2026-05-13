@@ -1,68 +1,117 @@
 import { useEffect, useState } from "react";
+import { supabase } from "./supabaseClient";
 import "./App.css";
 
-const STORAGE_KEY = "snack_survey_draft";
+const STORAGE_KEY = "snack_survey_draft_v2";
 const VIDEO_SRC = "/videos/snack-shorts.mp4";
 
 const PACKAGING_ITEMS = [
   {
     id: "q3",
-    reasonId: null,
-    title: "가격과 양이 같다고 가정할 때, 둘 중 어떤 과자를 구입할 것인가요?",
-    image: "/images/q3.png",
-    options: ["A 상자형", "B 봉지형"],
+    reasonId: "q4",
+    displayNo: "3",
+    reasonDisplayNo: "4",
+    title: "가격과 양이 똑같은 과자라면, 어떤 포장을 가장 선호하나요?",
+    image: "/images/q11.png",
+    options: ["원통형", "상자형", "봉지형"],
+    reasonTitle: "그렇게 선택한 이유를 모두 고르시오.",
+    reasons: [
+      "더 맛있어 보여서",
+      "먹다 남은 것을 보관하기 편해서",
+      "들고 다니며 먹기 편할 것 같아서",
+      "디자인이 예뻐서",
+      "양이 더 많아 보여서",
+      "쓰레기가 적게 나올 것 같아서",
+      "익숙해서",
+    ],
   },
   {
     id: "q5",
-    reasonId: null,
-    title: "가격과 양이 같다고 가정할 때, 둘 중 어떤 과자를 구입할 것인가요?",
-    image: "/images/q5.png",
-    options: ["A 상자형", "B 원통형"],
-  },
-  {
-    id: "q7",
-    reasonId: null,
-    title: "가격과 양이 같다고 가정할 때, 둘 중 어떤 과자를 구입할 것인가요?",
-    image: "/images/q7.png",
-    options: ["A 상자형", "B 원통형"],
-  },
-  {
-    id: "q9",
-    reasonId: null,
-    title: "가격과 양이 같다고 가정할 때, 둘 중 어떤 과자를 구입할 것인가요?",
-    image: "/images/q9.png",
-    options: ["A 원통형", "B 봉지형"],
-  },
-  {
-    id: "q11",
-    reasonId: "q12",
-    title: "가격과 양이 똑같은 과자라면, 어떤 포장을 가장 선호하나요?",
-    image: "/images/q11.png",
-    options: ["봉지형", "상자형", "원통형"],
-  },
-  {
-    id: "q13",
-    reasonId: "q14",
-    title: "가격이나 양을 생각하지 않고 둘 중 더 선호하는 것은 무엇입니까?",
+    reasonId: "q6",
+    displayNo: "5",
+    reasonDisplayNo: "6",
+    title: "다음 중 더 선호하는 과자는 무엇입니까?",
     image: "/images/q13.png",
     options: ["A 원통형", "B 봉지형"],
+    reasonTitle: "그렇게 선택한 이유를 모두 고르시오.",
+    reasons: [
+      "더 맛있어서",
+      "더 저렴해서",
+      "보관하기 편해서",
+      "양이 더 많기 때문에",
+      "쓰레기 처리가 편해서",
+    ],
   },
 ];
 
-const REASONS = [
-  "더 맛있어 보여서",
-  "보관하기 편해서",
-  "들고 다니며 먹기 편할 것 같아서",
-  "디자인이 예뻐서",
-  "양이 더 많아 보여서",
+const PRE_SURVEY_KEYS = PACKAGING_ITEMS.flatMap((item) =>
+  item.reasonId ? [item.id, item.reasonId] : [item.id]
+);
+
+function normalizePreSurvey(preSurvey = {}) {
+  return Object.fromEntries(
+    Object.entries(preSurvey).filter(([key]) => PRE_SURVEY_KEYS.includes(key))
+  );
+}
+
+
+const BASIC_FREQUENCY_OPTIONS = [
+  "전혀 없음",
+  "1~3회",
+  "4~6회",
+  "7~9회",
+  "10회 이상",
 ];
 
-const FREQUENCY_OPTIONS = [
-  "전혀 없다",
-  "1회 정도",
-  "2~3회",
-  "4~5회",
-  "6회 이상",
+const OPINION_REFLECT_OPTIONS = [
+  "매우 많이 반영된다",
+  "많이 반영된다",
+  "보통이다",
+  "반영되지 않는다",
+  "전혀 반영되지 않는다",
+];
+
+const BASIC_PACKAGE_EXPERIENCE_ITEMS = [
+  {
+    id: "q2_1_pouch",
+    displayNo: "2-1",
+    label: "봉지형",
+    image: "/images/q4_pouch.png",
+    fallbackImage: "/images/game_pouch.png",
+  },
+  {
+    id: "q2_2_box",
+    displayNo: "2-2",
+    label: "상자형",
+    image: "/images/q4_box.png",
+    fallbackImage: "/images/game_box.png",
+  },
+  {
+    id: "q2_3_cylinder",
+    displayNo: "2-3",
+    label: "원통형",
+    image: "/images/q4_cylinder.png",
+    fallbackImage: "/images/game_cylinder.png",
+  },
+];
+
+const CONVENIENCE_ITEMS = [
+  {
+    id: "q7_1",
+    title: "7-1. 원통형 포장은 남은 음식을 보관하기 편하다고 생각한다.",
+  },
+  {
+    id: "q7_2",
+    title: "7-2. 원통형 포장은 쌓아두기 편하다고 생각한다.",
+  },
+  {
+    id: "q7_3",
+    title: "7-3. 원통형 포장은 과자가 덜 부서진다고 생각한다.",
+  },
+  {
+    id: "q7_4",
+    title: "7-4. 원통형 포장은 들고 다니며 먹기 편하다고 생각한다.",
+  },
 ];
 
 const LIKERT_OPTIONS = [
@@ -76,12 +125,11 @@ const LIKERT_OPTIONS = [
 const POST_REASONS = [
   "보관하기 편해서",
   "먹다가 남겨도 다시 닫을 수 있어서",
-  "과자가 덜 부서질 것 같아서",
-  "디자인이 좋아 보여서",
-  "맛이나 제품 자체가 더 중요해서",
-  "분리배출이 어렵기 때문에",
+  "맛이 있어서",
   "환경에 좋지 않을 것 같아서",
-  "실제로 살 때 어떻게 행동할지 잘 모르겠어서",
+  "분리배출이 어려워서",
+  "분리배출하기 귀찮아서",
+  "쓰레기가 많이 나와서",
   "기타",
 ];
 
@@ -345,7 +393,7 @@ function getQ19BaseImage(selectedParts) {
 
 const GAME_ITEMS = [
   {
-    id: "q16_game_pouch",
+    id: "pre_game_pouch",
     name: "봉지형 포장 과자",
     image: "/images/game_pouch.png",
     hotspots: [
@@ -365,7 +413,7 @@ const GAME_ITEMS = [
     ],
   },
   {
-    id: "q17_game_box",
+    id: "pre_game_box",
     name: "상자형 포장 과자",
     image: "/images/game_box.png",
     hotspots: BOX_HOTSPOTS,
@@ -387,7 +435,7 @@ const GAME_ITEMS = [
     ],
   },
   {
-    id: "q18_game_cylinder",
+    id: "pre_game_cylinder",
     name: "원통형 포장 과자",
     image: "/images/game_cylinder.png",
     viewBox: PRINGLES_VIEWBOX,
@@ -401,9 +449,55 @@ function getBinLabel(binId) {
   return bin ? bin.label : binId;
 }
 
+function getResultPieceImage(log) {
+  const gameItem = GAME_ITEMS.find((item) => item.id === log.gameItemId);
+
+  if (!gameItem) return "";
+
+  if (log.targetPartId === "whole_package") {
+    return gameItem.image || "";
+  }
+
+  const layeredPiece = gameItem.layeredPieces?.find(
+    (piece) => piece.id === log.targetPartId
+  );
+
+  if (layeredPiece?.pieceImage) {
+    return layeredPiece.pieceImage;
+  }
+
+  const hotspotPiece = gameItem.hotspots?.find(
+    (part) => part.id === log.targetPartId
+  );
+
+  return hotspotPiece?.pieceImage || gameItem.image || "";
+}
+
 function getPercent(score, maxScore) {
   if (!maxScore) return 0;
   return Math.round((score / maxScore) * 1000) / 10;
+}
+
+function isPouchGameItem(item) {
+  return item?.id === "pre_game_pouch";
+}
+
+function isBoxGameItem(item) {
+  return item?.id === "pre_game_box";
+}
+
+function isGameItemAutoComplete(item, mode, selectedMap) {
+  if (!item || !mode) return false;
+
+  if (mode === "no_separation") {
+    return !!selectedMap.__whole_package?.selectedBin;
+  }
+
+  if (mode === "separate") {
+    return item.hotspots.every((part) => !!selectedMap[part.id]?.selectedBin);
+  }
+
+  return false;
 }
 
 function makeRespondentNo() {
@@ -435,23 +529,47 @@ function createInitialSurvey() {
     respondentNo: makeRespondentNo(),
     grade: "",
     gender: "",
+    basicSurvey: {
+      q1: "",
+      q2_1_pouch: "",
+      q2_2_box: "",
+      q2_3_cylinder: "",
+    },
     preSurvey: {},
-    experience: {
-      q15_pouch: "",
-      q15_box: "",
-      q15_cylinder: "",
+    convenienceSurvey: {
+      q7_1: "",
+      q7_2: "",
+      q7_3: "",
+      q7_4: "",
     },
     afterGame: {
-      q18: "",
-      q19: "",
+      q8: "",
+      q9: "",
+    },
+    postPerception: {
+      q10: "",
+      q11: "",
     },
     postSurvey: {
-      q20: "",
-      q21: [],
+      q12: "",
+      q13: [],
+      q13Other: "",
+      q14: "",
     },
     video: {
       watched: false,
       watchedAt: "",
+    },
+    voiceQuiz: {
+      answer: "",
+      submittedAt: "",
+    },
+    eventEntry: {
+      studentId: "",
+      name: "",
+      applied: false,
+      skipped: false,
+      submittedAt: "",
     },
     q19Quiz: {
       selectedParts: {},
@@ -468,28 +586,99 @@ function createInitialSurvey() {
   };
 }
 
+function joinReasons(value) {
+  return Array.isArray(value) ? value.join(" | ") : "";
+}
+
+function buildSurveyRow(nextSurvey, hasFullEventInfo) {
+  return {
+    respondent_no: nextSurvey.respondentNo,
+    grade: nextSurvey.grade,
+    gender: nextSurvey.gender,
+
+    q1_opinion_reflect: nextSurvey.basicSurvey?.q1 || "",
+    q2_1_pouch_experience: nextSurvey.basicSurvey?.q2_1_pouch || "",
+    q2_2_box_experience: nextSurvey.basicSurvey?.q2_2_box || "",
+    q2_3_cylinder_experience: nextSurvey.basicSurvey?.q2_3_cylinder || "",
+
+    q3_package_preference: nextSurvey.preSurvey?.q3 || "",
+    q4_preference_reasons: joinReasons(nextSurvey.preSurvey?.q4),
+    q5_pair_preference: nextSurvey.preSurvey?.q5 || "",
+    q6_pair_reasons: joinReasons(nextSurvey.preSurvey?.q6),
+
+    q7_1_storage_convenience: nextSurvey.convenienceSurvey?.q7_1 || "",
+    q7_2_stack_convenience: nextSurvey.convenienceSurvey?.q7_2 || "",
+    q7_3_breakage_protection: nextSurvey.convenienceSurvey?.q7_3 || "",
+    q7_4_portable_convenience: nextSurvey.convenienceSurvey?.q7_4 || "",
+
+    pre_game_score: nextSurvey.game?.score ?? 0,
+    pre_game_max_score: nextSurvey.game?.maxScore ?? 0,
+    pre_game_logs: nextSurvey.game?.logs || [],
+
+    q8_after_game_difficulty: nextSurvey.afterGame?.q8 || "",
+    q9_after_game_environment: nextSurvey.afterGame?.q9 || "",
+
+    voice_quiz_answer: nextSurvey.voiceQuiz?.answer || "",
+
+    post_quiz_score: nextSurvey.q19Quiz?.score ?? 0,
+    post_quiz_max_score: nextSurvey.q19Quiz?.maxScore ?? 0,
+    post_quiz_logs: nextSurvey.q19Quiz?.logs || [],
+
+    q10_after_video_difficulty: nextSurvey.postPerception?.q10 || "",
+    q11_after_video_environment: nextSurvey.postPerception?.q11 || "",
+
+    q12_purchase_intent: nextSurvey.postSurvey?.q12 || "",
+    q13_purchase_reasons: joinReasons(nextSurvey.postSurvey?.q13),
+    q13_other: nextSurvey.postSurvey?.q13Other || "",
+    q14_friend_purchase_prediction: nextSurvey.postSurvey?.q14 || "",
+
+    event_applied: hasFullEventInfo,
+    event_student_id: hasFullEventInfo ? nextSurvey.eventEntry?.studentId || "" : null,
+    event_name: hasFullEventInfo ? nextSurvey.eventEntry?.name || "" : null,
+
+    payload: nextSurvey,
+  };
+}
+
 function normalizeSurvey(survey) {
   const base = createInitialSurvey();
 
   return {
     ...base,
     ...survey,
-    preSurvey: survey?.preSurvey || {},
-    experience: {
-      ...base.experience,
-      ...(survey?.experience || {}),
+    basicSurvey: {
+      ...base.basicSurvey,
+      ...(survey?.basicSurvey || {}),
+    },
+    preSurvey: normalizePreSurvey(survey?.preSurvey || {}),
+    convenienceSurvey: {
+      ...base.convenienceSurvey,
+      ...(survey?.convenienceSurvey || {}),
     },
     afterGame: {
       ...base.afterGame,
       ...(survey?.afterGame || {}),
     },
+    postPerception: {
+      ...base.postPerception,
+      ...(survey?.postPerception || {}),
+    },
     postSurvey: {
       ...base.postSurvey,
       ...(survey?.postSurvey || {}),
+      q13: Array.isArray(survey?.postSurvey?.q13) ? survey.postSurvey.q13 : [],
     },
     video: {
       ...base.video,
       ...(survey?.video || {}),
+    },
+    voiceQuiz: {
+      ...base.voiceQuiz,
+      ...(survey?.voiceQuiz || {}),
+    },
+    eventEntry: {
+      ...base.eventEntry,
+      ...(survey?.eventEntry || {}),
     },
     q19Quiz: {
       ...base.q19Quiz,
@@ -522,8 +711,8 @@ function loadSavedDraft() {
     const saved = JSON.parse(raw);
 
     return {
-      step: saved.step || "intro",
-      preIndex: saved.preIndex || 0,
+      step: saved.step === "voiceQuiz" ? "video" : saved.step || "intro",
+      preIndex: saved.preIndex >= 0 && saved.preIndex < PACKAGING_ITEMS.length ? saved.preIndex : 0,
       survey: normalizeSurvey(saved.survey || createInitialSurvey()),
     };
   } catch {
@@ -544,6 +733,7 @@ export default function App() {
   const [survey, setSurvey] = useState(savedDraft.survey);
   const [preIndex, setPreIndex] = useState(savedDraft.preIndex);
   const [binModal, setBinModal] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     localStorage.setItem(
@@ -560,6 +750,16 @@ export default function App() {
     setSurvey((prev) => ({
       ...prev,
       [field]: value,
+    }));
+  }
+
+  function updateBasicSurvey(field, value) {
+    setSurvey((prev) => ({
+      ...prev,
+      basicSurvey: {
+        ...(prev.basicSurvey || {}),
+        [field]: value,
+      },
     }));
   }
 
@@ -590,21 +790,32 @@ export default function App() {
     });
   }
 
-  function updateExperience(field, value) {
+  function updateConvenience(field, value) {
     setSurvey((prev) => ({
       ...prev,
-      experience: {
-        ...prev.experience,
+      convenienceSurvey: {
+        ...prev.convenienceSurvey,
         [field]: value,
       },
     }));
   }
+
 
   function updateAfterGame(field, value) {
     setSurvey((prev) => ({
       ...prev,
       afterGame: {
         ...prev.afterGame,
+        [field]: value,
+      },
+    }));
+  }
+
+  function updatePostPerception(field, value) {
+    setSurvey((prev) => ({
+      ...prev,
+      postPerception: {
+        ...(prev.postPerception || {}),
         [field]: value,
       },
     }));
@@ -622,8 +833,9 @@ export default function App() {
 
   function togglePostReason(value) {
     setSurvey((prev) => {
-      const current = prev.postSurvey.q21 || [];
-      const next = current.includes(value)
+      const current = prev.postSurvey.q13 || [];
+      const isRemoving = current.includes(value);
+      const next = isRemoving
         ? current.filter((item) => item !== value)
         : [...current, value];
 
@@ -631,7 +843,9 @@ export default function App() {
         ...prev,
         postSurvey: {
           ...prev.postSurvey,
-          q21: next,
+          q13: next,
+          q13Other:
+            value === "기타" && isRemoving ? "" : prev.postSurvey.q13Other || "",
         },
       };
     });
@@ -643,7 +857,25 @@ export default function App() {
       return;
     }
 
+    setStep("basicSurvey");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function finishBasicSurvey() {
+    const { q1, q2_1_pouch, q2_2_box, q2_3_cylinder } = survey.basicSurvey || {};
+
+    if (!q1) {
+      alert("1번 문항에 응답하세요.");
+      return;
+    }
+
+    if (!q2_1_pouch || !q2_2_box || !q2_3_cylinder) {
+      alert("2번 포장 형태별 이용 경험에 모두 응답하세요.");
+      return;
+    }
+
     setStep("preference");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function nextPre() {
@@ -667,27 +899,25 @@ export default function App() {
       return;
     }
 
-    setStep("experience");
+    setStep("convenience");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function prevPre() {
-    if (preIndex > 0) {
-      setPreIndex(preIndex - 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  }
+  function finishConvenience() {
+    const convenienceSurvey = survey.convenienceSurvey || {};
+    const unansweredItem = CONVENIENCE_ITEMS.find((item) => !convenienceSurvey[item.id]);
 
-  function finishExperience() {
-    const { q15_pouch, q15_box, q15_cylinder } = survey.experience;
-
-    if (!q15_pouch || !q15_box || !q15_cylinder) {
-      alert("봉지형, 상자형, 원통형 포장 이용 경험에 모두 응답하세요.");
+    if (unansweredItem) {
+      alert("7-1번부터 7-4번까지 모두 응답하세요.");
       return;
     }
 
     setStep("game");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
+
+  
+
 
   function chooseGameMode(mode) {
     const item = GAME_ITEMS[survey.game.currentIndex];
@@ -867,22 +1097,64 @@ export default function App() {
         return;
       }
 
-      const log = {
+      if (isPouchGameItem(item)) {
+        const isCorrect = wholeAnswer.selectedBin === "vinyl";
+
+        const log = {
+          stage: "pre_video_game",
+          selectionStatus: "whole_package_no_separation",
+          gameItemId: item.id,
+          gameItemName: item.name,
+          targetPartId: "whole_package",
+          targetPartLabel: "포장 전체(분리할 부분 없음)",
+          selectedBin: wholeAnswer.selectedBin,
+          selectedBinLabel: wholeAnswer.selectedBinLabel,
+          correctBin: "vinyl",
+          correctBinLabel: getBinLabel("vinyl"),
+          isCorrect,
+          eventTime: wholeAnswer.selectedAt,
+        };
+
+        moveToNextGameItem([log], isCorrect ? 1 : 0, 1);
+        return;
+      }
+
+      if (isBoxGameItem(item)) {
+        const logs = item.hotspots.map((part) => ({
+          stage: "pre_video_game",
+          selectionStatus: "whole_package_no_separation",
+          gameItemId: item.id,
+          gameItemName: item.name,
+          targetPartId: part.id,
+          targetPartLabel: part.label,
+          selectedBin: wholeAnswer.selectedBin,
+          selectedBinLabel: wholeAnswer.selectedBinLabel,
+          correctBin: part.correctBin,
+          correctBinLabel: getBinLabel(part.correctBin),
+          isCorrect: false,
+          eventTime: wholeAnswer.selectedAt,
+        }));
+
+        moveToNextGameItem(logs, 0, item.hotspots.length);
+        return;
+      }
+
+      const logs = item.hotspots.map((part) => ({
         stage: "pre_video_game",
         selectionStatus: "whole_package_no_separation",
         gameItemId: item.id,
         gameItemName: item.name,
-        targetPartId: "whole_package",
-        targetPartLabel: "포장 전체(분리할 부분 없음)",
+        targetPartId: part.id,
+        targetPartLabel: part.label,
         selectedBin: wholeAnswer.selectedBin,
         selectedBinLabel: wholeAnswer.selectedBinLabel,
-        correctBin: "",
-        correctBinLabel: "채점 제외",
+        correctBin: part.correctBin,
+        correctBinLabel: getBinLabel(part.correctBin),
         isCorrect: false,
         eventTime: wholeAnswer.selectedAt,
-      };
+      }));
 
-      moveToNextGameItem([log], 0, 0);
+      moveToNextGameItem(logs, 0, item.hotspots.length);
       return;
     }
 
@@ -958,9 +1230,25 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  useEffect(() => {
+    if (step !== "game") return;
+
+    const item = GAME_ITEMS[survey.game.currentIndex];
+    const mode = item ? survey.game.modes[item.id] || "" : "";
+    const selectedMap = item ? survey.game.selectedParts[item.id] || {} : {};
+
+    if (!isGameItemAutoComplete(item, mode, selectedMap)) return;
+
+    const timer = window.setTimeout(() => {
+      finishCurrentGameItem();
+    }, 450);
+
+    return () => window.clearTimeout(timer);
+  }, [step, survey.game.currentIndex, survey.game.modes, survey.game.selectedParts]);
+
   function finishAfterGame() {
-    if (!survey.afterGame.q18 || !survey.afterGame.q19) {
-      alert("18번과 19번 문항에 모두 응답하세요.");
+    if (!survey.afterGame.q8 || !survey.afterGame.q9) {
+      alert("8번과 9번 문항에 모두 응답하세요.");
       return;
     }
 
@@ -968,16 +1256,106 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  function finishPostPerception() {
+    const postPerception = survey.postPerception || {};
+
+    if (!postPerception.q10 || !postPerception.q11) {
+      alert("10번과 11번 문항에 모두 응답하세요.");
+      return;
+    }
+
+    setStep("post");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function updateVoiceQuizAnswer(value) {
+    setSurvey((prev) => ({
+      ...prev,
+      voiceQuiz: {
+        ...(prev.voiceQuiz || {}),
+        answer: value,
+      },
+    }));
+  }
+
+
+  function updateEventEntry(field, value) {
+    setSurvey((prev) => ({
+      ...prev,
+      eventEntry: {
+        ...(prev.eventEntry || {}),
+        [field]: value,
+      },
+    }));
+  }
+
+  async function submitEventEntry() {
+    if (isSubmitting) return;
+
+    const studentId = (survey.eventEntry?.studentId || "").trim();
+    const name = (survey.eventEntry?.name || "").trim();
+    const voiceQuizAnswer = (survey.voiceQuiz?.answer || "").trim();
+
+    const hasVoiceQuizAnswer = !!voiceQuizAnswer;
+    const hasFullEventInfo = hasVoiceQuizAnswer && !!studentId && !!name;
+
+    const nextEventEntry = {
+      ...(survey.eventEntry || {}),
+      studentId,
+      name,
+      applied: hasFullEventInfo,
+      skipped: !hasFullEventInfo,
+      submittedAt: new Date().toISOString(),
+    };
+    const nextSurvey = {
+      ...survey,
+      submittedAt: new Date().toISOString(),
+      eventEntry: nextEventEntry,
+    };
+
+    const row = buildSurveyRow(nextSurvey, hasFullEventInfo);
+
+    setIsSubmitting(true);
+
+    const { error } = await supabase
+      .from("snack_survey_responses")
+      .insert(row);
+
+    setIsSubmitting(false);
+
+    if (error) {
+      console.error("Supabase 저장 오류:", error);
+      alert("응답 저장 중 오류가 발생했습니다. 인터넷 연결을 확인한 뒤 다시 제출해 주세요.");
+      return;
+    }
+
+    setSurvey(nextSurvey);
+    alert(
+      hasFullEventInfo
+        ? "설문이 제출되었습니다. 이벤트 응모 정보도 함께 기록되었습니다."
+        : "설문이 제출되었습니다. 이벤트 응모 정보는 입력하지 않았습니다."
+    );
+  }
+
+
   function finishVideo() {
+    const answer = (survey.voiceQuiz?.answer || "").trim();
+
     setSurvey((prev) => ({
       ...prev,
       video: {
         watched: true,
         watchedAt: new Date().toISOString(),
       },
+      voiceQuiz: {
+        ...(prev.voiceQuiz || {}),
+        answer,
+        submittedAt: new Date().toISOString(),
+      },
     }));
 
     setStep("quiz");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function getQ19StageKey(selectedParts = survey.q19Quiz.selectedParts) {
@@ -1053,11 +1431,6 @@ export default function App() {
   function finishQ19Quiz() {
     const selectedParts = survey.q19Quiz.selectedParts;
 
-    if (Object.keys(selectedParts).length === 0) {
-      alert("터치형 퀴즈에서 최소 1개 이상 선택하세요.");
-      return;
-    }
-
     let score = 0;
     const maxScore = Q19_PART_DEFS.length;
     const finalStage = getQ19StageKey(selectedParts);
@@ -1120,19 +1493,32 @@ export default function App() {
       return;
     }
 
-    if (!survey.postSurvey.q20) {
-      alert("구매의향 문항에 응답하세요.");
+    if (!survey.postSurvey.q12) {
+      alert("12번 문항에 응답하세요.");
       return;
     }
 
-    if (survey.postSurvey.q21.length === 0) {
-      alert("구매의향 이유를 1개 이상 선택하세요.");
+    if ((survey.postSurvey.q13 || []).length === 0) {
+      alert("13번 이유를 1개 이상 선택하세요.");
       return;
     }
 
-    console.log("최종 제출 데이터", survey);
-    alert("현재는 Supabase 연결 전입니다. 콘솔에 데이터가 출력되었습니다.");
+    if (survey.postSurvey.q13?.includes("기타") && !survey.postSurvey.q13Other?.trim()) {
+      alert("13번에서 기타를 선택한 경우 내용을 입력하세요.");
+      return;
+    }
+
+    if (!survey.postSurvey.q14) {
+      alert("14번 문항에 응답하세요.");
+      return;
+    }
+
+    setSurvey((prev) => ({
+      ...prev,
+      submittedAt: new Date().toISOString(),
+    }));
     setStep("done");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function resetDraft() {
@@ -1157,13 +1543,24 @@ export default function App() {
             <h1>과자 포장에 대한 인식과 태도 조사</h1>
 
             <p className="desc">
-              과자 포장 유형에 대한 선호도, 포장 형태별 이용 경험,
-              분리배출 판단, 영상 시청 후 구매의향을 알아보기 위한 조사입니다.
+              과자를 고를 때 어떤 포장을 더 좋아하는지, 그리고 포장을 버릴 때 어떤 부분이 어려운지 알아보는 조사입니다.
+              이미지와 영상이 포함되어 있어 화면 전환 시 잠시 로딩될 수 있습니다. 
+              <span className="intro-warning">설문 중 이미지가 바로 뜨지 않아도 잠시 기다려 주세요.</span>
             </p>
 
-            <div className="respondent-box">
-              <strong>자동 생성된 응답자 번호</strong>
-              <p>{survey.respondentNo}</p>
+            <div className="event-notice-box">
+              <strong>특별 이벤트 안내</strong>
+              <p>
+                설문 중 나오는 영상 속 목소리의 주인공을 맞춰라! 
+              </p>
+ 
+              <p className="event-hint">
+                힌트! 우리학교 2학년이에요.
+              </p>
+
+              <p>
+                정답자 중 추첨하여 <span className="event-prize">GS25 5,000원 상품권</span>을 드립니다. 이벤트 응모는 설문 마지막 화면에서 할 수 있습니다.
+              </p>
             </div>
 
             <label className="field">
@@ -1195,10 +1592,20 @@ export default function App() {
               설문 시작
             </button>
 
-            <button type="button" className="secondary" onClick={resetDraft}>
-              임시 저장값 지우기
-            </button>
+            <div className="respondent-box">
+              <strong>자동 생성된 응답자 번호</strong>
+              <p>{survey.respondentNo}</p>
+            </div>
+
           </>
+        )}
+
+        {step === "basicSurvey" && (
+          <BasicSurveyStep
+            survey={survey}
+            updateBasicSurvey={updateBasicSurvey}
+            finishBasicSurvey={finishBasicSurvey}
+          />
         )}
 
         {step === "preference" && (
@@ -1209,18 +1616,18 @@ export default function App() {
             survey={survey}
             updatePre={updatePre}
             togglePreReason={togglePreReason}
-            prevPre={prevPre}
             nextPre={nextPre}
           />
         )}
 
-        {step === "experience" && (
-          <ExperienceStep
+        {step === "convenience" && (
+          <ConvenienceStep
             survey={survey}
-            updateExperience={updateExperience}
-            finishExperience={finishExperience}
+            updateConvenience={updateConvenience}
+            finishConvenience={finishConvenience}
           />
         )}
+
 
         {step === "game" && (
           <GameStep
@@ -1252,7 +1659,13 @@ export default function App() {
           />
         )}
 
-        {step === "video" && <VideoStep finishVideo={finishVideo} />}
+        {step === "video" && (
+          <VideoStep
+            survey={survey}
+            updateVoiceQuizAnswer={updateVoiceQuizAnswer}
+            finishVideo={finishVideo}
+          />
+        )}
 
         {step === "quiz" && (
           <Q19QuizStep
@@ -1269,9 +1682,17 @@ export default function App() {
           <Q19ResultStep
             q19Quiz={survey.q19Quiz}
             onNext={() => {
-              setStep("post");
+              setStep("postPerception");
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
+          />
+        )}
+
+        {step === "postPerception" && (
+          <PostPerceptionStep
+            survey={survey}
+            updatePostPerception={updatePostPerception}
+            finishPostPerception={finishPostPerception}
           />
         )}
 
@@ -1285,15 +1706,36 @@ export default function App() {
         )}
 
         {step === "done" && (
-          <>
-            <h2>제출 테스트 완료</h2>
-            <p className="desc">
-              현재는 Supabase 연결 전이라 실제 서버에는 저장되지 않았습니다.
-              제출 데이터는 브라우저 콘솔에 출력되었습니다.
-            </p>
+          <EventEntryStep
+            survey={survey}
+            updateEventEntry={updateEventEntry}
+            submitEventEntry={submitEventEntry}
+            isSubmitting={isSubmitting}
+          />
+        )}
 
+        {![
+          "intro",
+          "basicSurvey",
+          "preference",
+          "convenience",
+          "game",
+          "afterGame",
+          "gameResult",
+          "video",
+          "quiz",
+          "q19Result",
+          "postPerception",
+          "post",
+          "done",
+        ].includes(step) && (
+          <>
+            <h2>화면을 불러오지 못했습니다</h2>
+            <p className="desc">
+              이전 임시 저장값과 현재 설문 단계가 맞지 않습니다. 아래 버튼을 눌러 처음부터 다시 시작하세요.
+            </p>
             <button type="button" className="secondary" onClick={resetDraft}>
-              새 응답 시작
+              처음부터 다시 시작
             </button>
           </>
         )}
@@ -1311,6 +1753,127 @@ export default function App() {
   );
 }
 
+function QuestionTitle({ no, text, note }) {
+  return (
+    <h3 className="survey-question-title question-title-with-pill">
+      <span className="question-number-pill">{no}</span>
+      <span className="question-title-text">{text}</span>
+      {note && <span className="question-note">{note}</span>}
+    </h3>
+  );
+}
+
+function BasicSurveyStep({ survey, updateBasicSurvey, finishBasicSurvey }) {
+  const basicSurvey = survey.basicSurvey || {};
+
+  return (
+    <>
+      <h2>2단계. 기초 조사</h2>
+
+      <OpinionReflectQuestion
+        no="1"
+        title="평소 과자를 구매할 때 내 의견은 어느 정도 반영되나요?"
+        name="q1"
+        value={basicSurvey.q1 || ""}
+        onChange={(value) => updateBasicSurvey("q1", value)}
+      />
+
+      <div className="question">
+        <QuestionTitle
+          no="2"
+          text="최근 한 달 동안 아래 포장 형태의 과자를 구입하거나 먹은 경험을 선택하세요."
+        />
+
+        <div className="basic-package-grid">
+          {BASIC_PACKAGE_EXPERIENCE_ITEMS.map((item) => (
+            <BasicPackageFrequencyQuestion
+              key={item.id}
+              item={item}
+              value={basicSurvey[item.id] || ""}
+              onChange={(value) => updateBasicSurvey(item.id, value)}
+            />
+          ))}
+        </div>
+      </div>
+
+      <button type="button" onClick={finishBasicSurvey}>
+        다음으로
+      </button>
+    </>
+  );
+}
+
+function OpinionReflectQuestion({ no, title, name, value, onChange }) {
+  return (
+    <div className="question opinion-reflect-question">
+      <QuestionTitle no={no} text={title} />
+
+      <div className="opinion-reflect-guide">
+        내 의견이 과자 구매 결정에 실제로 어느 정도 반영되는지 선택하세요.
+      </div>
+
+      <div className="opinion-reflect-options">
+        {OPINION_REFLECT_OPTIONS.map((option) => (
+          <label
+            key={option}
+            className={value === option ? "opinion-reflect-option selected" : "opinion-reflect-option"}
+          >
+            <input
+              type="radio"
+              name={name}
+              checked={value === option}
+              onChange={() => onChange(option)}
+            />
+            <span>{option}</span>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function BasicPackageFrequencyQuestion({ item, value, onChange }) {
+  const [imageSrc, setImageSrc] = useState(item.image);
+
+  return (
+    <div className={`basic-package-card basic-package-card-${item.id}`}>
+      <div className="basic-package-title">
+        <span className="basic-package-no">{item.displayNo}</span>
+        <span>{item.label}</span>
+      </div>
+
+      <div className="basic-package-image-box">
+        <img
+          src={imageSrc}
+          alt={`${item.label} 포장 이미지`}
+          onError={() => {
+            if (item.fallbackImage && imageSrc !== item.fallbackImage) {
+              setImageSrc(item.fallbackImage);
+            }
+          }}
+        />
+      </div>
+
+      <div className="frequency-chip-grid">
+        {BASIC_FREQUENCY_OPTIONS.map((option) => (
+          <label
+            key={option}
+            className={value === option ? "frequency-chip selected" : "frequency-chip"}
+          >
+            <input
+              type="radio"
+              name={item.id}
+              checked={value === option}
+              onChange={() => onChange(option)}
+            />
+            <span>{option}</span>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function PreferenceStep({
   item,
   index,
@@ -1318,7 +1881,6 @@ function PreferenceStep({
   survey,
   updatePre,
   togglePreReason,
-  prevPre,
   nextPre,
 }) {
   const choice = survey.preSurvey[item.id] || "";
@@ -1326,16 +1888,17 @@ function PreferenceStep({
 
   return (
     <>
-      <h2>2단계. 포장 선호도 조사</h2>
+      <h2>3단계. 포장 선호도 조사</h2>
 
       <div className="status">
         문항 {index + 1} / {total}
       </div>
 
       <div className="question">
-        <h3>
-          {item.id.replace("q", "")}. {item.title}
-        </h3>
+        <QuestionTitle
+          no={item.displayNo || item.id.replace("q", "")}
+          text={item.title}
+        />
 
         {item.image && (
           <div className="image-box">
@@ -1359,13 +1922,14 @@ function PreferenceStep({
 
         {item.reasonId && (
           <>
-            <h3>
-              {item.reasonId.replace("q", "")}. 그렇게 선택한 이유는
-              무엇입니까?
-            </h3>
+            <QuestionTitle
+              no={item.reasonDisplayNo || item.reasonId.replace("q", "")}
+              text={item.reasonTitle || "그렇게 선택한 이유를 모두 고르시오."}
+              note="복수 체크 가능"
+            />
 
             <div className="options">
-              {REASONS.map((reason) => (
+              {(item.reasons || []).map((reason) => (
                 <label key={reason}>
                   <input
                     type="checkbox"
@@ -1380,76 +1944,42 @@ function PreferenceStep({
         )}
       </div>
 
-      <div className="button-row">
-        <button type="button" className="secondary" onClick={prevPre}>
-          이전
-        </button>
-        <button type="button" onClick={nextPre}>
-          {index === total - 1 ? "이용 경험 문항으로 이동" : "다음"}
-        </button>
-      </div>
-    </>
-  );
-}
-
-function ExperienceStep({ survey, updateExperience, finishExperience }) {
-  return (
-    <>
-      <h2>3단계. 포장 형태별 과자 이용 경험</h2>
-
-      <p className="desc">
-        최근 한 달 동안 아래 포장 형태의 과자를 구입하거나 먹은 경험을 선택하세요.
-      </p>
-
-      <FrequencyQuestion
-        title="15-1. 봉지형"
-        name="q15_pouch"
-        value={survey.experience.q15_pouch}
-        onChange={(value) => updateExperience("q15_pouch", value)}
-      />
-
-      <FrequencyQuestion
-        title="15-2. 상자형"
-        name="q15_box"
-        value={survey.experience.q15_box}
-        onChange={(value) => updateExperience("q15_box", value)}
-      />
-
-      <FrequencyQuestion
-        title="15-3. 원통형"
-        name="q15_cylinder"
-        value={survey.experience.q15_cylinder}
-        onChange={(value) => updateExperience("q15_cylinder", value)}
-      />
-
-      <button type="button" onClick={finishExperience}>
-        분리배출 게임으로 이동
+      <button type="button" onClick={nextPre}>
+        {index === total - 1 ? "다음으로" : "다음"}
       </button>
     </>
   );
 }
 
-function FrequencyQuestion({ title, name, value, onChange }) {
-  return (
-    <div className="question">
-      <h3>{title}</h3>
+function ConvenienceStep({ survey, updateConvenience, finishConvenience }) {
+  const convenienceSurvey = survey.convenienceSurvey || {};
 
-      <div className="options">
-        {FREQUENCY_OPTIONS.map((option) => (
-          <label key={option}>
-            <input
-              type="radio"
-              name={name}
-              checked={value === option}
-              onChange={() => onChange(option)}
-            />
-            {option}
-          </label>
-        ))}
-      </div>
-    </div>
+  return (
+    <>
+      <h2>4단계. 원통형 포장은 얼마나 편할까?</h2>
+
+      <p className="desc">
+        원통형 포장의 편리성에 대해 어느 정도 동의하는지 선택하세요.
+      </p>
+
+      {CONVENIENCE_ITEMS.map((item) => (
+        <LikertQuestion
+          key={item.id}
+          title={item.title}
+          name={item.id}
+          value={convenienceSurvey[item.id] || ""}
+          onChange={(value) => updateConvenience(item.id, value)}
+          horizontal
+        />
+      ))}
+
+      <button type="button" onClick={finishConvenience}>
+        다음으로
+      </button>
+    </>
   );
 }
+
 
 function useIsMobileLike() {
   return true;
@@ -1606,11 +2136,15 @@ function GameStep({
 
   return (
     <>
-      <h2>4단계. 분리배출 게임</h2>
+      <h2>5단계. 분리배출 게임</h2>
 
-      <p className="desc">
-        포장 이미지를 보고, 버릴 때 어떻게 처리할지 선택하세요.
-        버리고자 하는 부분을 터치하면 배출함 선택창이 뜹니다.
+      <p className="desc game-desc">
+        포장 이미지를 보고, 버릴 때 어떻게 처리할지 선택하세요. 우선 {" "}
+        <span className="game-touch-emphasis">분리할 부분</span> {" "}이 있는지 없는지 {" "}
+        <span className="game-touch-emphasis">‘선택’</span>하세요. 다음으로 {" "}
+        <span className="game-touch-emphasis">버리고자 하는 부분</span>을 {" "}
+        <span className="game-touch-emphasis">‘터치’</span>하면
+        배출함 선택창이 뜹니다.
       </p>
 
       <div className="status">
@@ -1625,8 +2159,6 @@ function GameStep({
           분리할 부분 있음
         </button>
       </div>
-
-      <h3>{item.name}</h3>
 
       {mode === "no_separation" ? (
         <WholePackageImage
@@ -1727,9 +2259,11 @@ function GameStep({
             />
           )}
 
-          <button type="button" onClick={finishCurrentGameItem}>
-            다음으로
-          </button>
+          {isGameItemAutoComplete(item, mode, selectedMap) && (
+            <div className="auto-next-notice">
+              선택이 완료되었습니다. 다음 화면으로 이동합니다.
+            </div>
+          )}
         </>
       )}
 
@@ -2150,16 +2684,28 @@ function BinOption({ bin, onChoose }) {
 
 
 function ResultItem({ log, wrong }) {
+  const pieceImage = getResultPieceImage(log);
+
   return (
     <div className={wrong ? "result-item result-item-wrong" : "result-item"}>
-      <div className="result-item-title">
-        {log.gameItemName} · {log.targetPartLabel}
-      </div>
-      <div className="result-item-line">
-        내 선택: <strong>{log.selectedBinLabel || "선택 안 함"}</strong>
-      </div>
-      <div className={wrong ? "result-item-line result-wrong-text" : "result-item-line"}>
-        정답: <strong>{log.correctBinLabel || "정답 없음"}</strong>
+      {pieceImage && (
+        <div className="result-piece-thumb">
+          <img src={pieceImage} alt={log.targetPartLabel || "분리배출 조각"} />
+        </div>
+      )}
+
+      <div className="result-item-content">
+        <div className="result-item-title">
+          {log.gameItemName} · {log.targetPartLabel}
+        </div>
+
+        <div className="result-item-line">
+          내 선택: <strong>{log.selectedBinLabel || "선택 안 함"}</strong>
+        </div>
+
+        <div className={wrong ? "result-item-line result-wrong-text" : "result-item-line"}>
+          정답: <strong>{log.correctBinLabel || "정답 없음"}</strong>
+        </div>
       </div>
     </div>
   );
@@ -2200,12 +2746,85 @@ function ResultScoreScreen({
   standardText,
   nextButtonText,
   onNext,
+  correctionOnly = false,
+  scoreOnly = false,
 }) {
   const percent = getPercent(score, maxScore);
-  const scoredLogs = logs.filter((log) => log.correctBinLabel !== "채점 제외");
+  const scoredLogs = logs;
   const correctLogs = scoredLogs.filter((log) => log.isCorrect);
   const wrongLogs = scoredLogs.filter((log) => !log.isCorrect);
-  const excludedLogs = logs.filter((log) => log.correctBinLabel === "채점 제외");
+
+  if (scoreOnly) {
+    return (
+      <>
+        <h2>{title}</h2>
+
+        <div className="result-score-card result-score-hero-card result-score-only-card">
+          <div className="result-score-label">내 점수</div>
+          <div className="result-score-main result-score-hero-main">
+            <strong>{score}</strong>
+            <span>/ {maxScore}점</span>
+          </div>
+          <div className="result-score-max">만점: {maxScore}점</div>
+        </div>
+
+        <button type="button" onClick={onNext}>
+          {nextButtonText}
+        </button>
+      </>
+    );
+  }
+
+  if (correctionOnly) {
+    return (
+      <>
+        <h2>{title}</h2>
+        <p className="desc">{desc}</p>
+
+        <div className="result-score-card result-score-hero-card">
+          <div className="result-score-label">답변자가 얻은 점수</div>
+          <div className="result-score-main result-score-hero-main">
+            <strong>{score}</strong>
+            <span>/ {maxScore}점</span>
+          </div>
+          <div className="result-score-max">만점: {maxScore}점</div>
+          <div className="result-score-percent">정답률 {percent}%</div>
+
+          {standardText && (
+            <div className="result-standard">
+              {standardText}
+            </div>
+          )}
+        </div>
+
+        <div className="result-section result-correction-section">
+          <div className="result-section-title result-correction-title">
+            오답 정정 ({wrongLogs.length})
+          </div>
+
+          {wrongLogs.length > 0 ? (
+            <div className="result-list">
+              {wrongLogs.map((log, index) => (
+                <ResultItem
+                  key={`${log.gameItemId}-${log.targetPartId}-${index}`}
+                  log={log}
+                  wrong
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="result-empty result-correction-empty">
+              오답이 없습니다.
+            </div>
+          )}
+        </div>
+
+        <button type="button" onClick={onNext}>
+          {nextButtonText}
+        </button>
+      </>
+    );
+  }
 
   return (
     <>
@@ -2230,10 +2849,6 @@ function ResultScoreScreen({
       <ResultSection title="맞힌 것" logs={correctLogs} />
       <ResultSection title="틀린 것" logs={wrongLogs} wrong />
 
-      {excludedLogs.length > 0 && (
-        <ResultSection title="채점 제외" logs={excludedLogs} />
-      )}
-
       <button type="button" onClick={onNext}>
         {nextButtonText}
       </button>
@@ -2244,14 +2859,15 @@ function ResultScoreScreen({
 function GameResultStep({ game, onNext }) {
   return (
     <ResultScoreScreen
-      title="6단계. 분리배출 게임 점수 공개"
-      desc="아래에서 게임 점수와 맞은 항목, 틀린 항목을 확인한 뒤 영상을 보세요."
+      title="7단계. 분리배출 게임 점수 공개"
+      desc="분리배출 게임의 총점과 오답 정정 내용을 확인한 뒤 영상을 보세요."
       score={game.score}
       maxScore={game.maxScore}
       logs={game.logs}
-      standardText="기준: 봉지 1점 + 상자 2점 + 원통 4점 = 총 7점"
-      nextButtonText="올바른 분리배출 방법 영상 보기"
+      standardText="만점 기준: 봉지 1점 + 상자 2점 + 원통 4점 = 총 7점"
+      nextButtonText="다음으로"
       onNext={onNext}
+      correctionOnly
     />
   );
 }
@@ -2259,59 +2875,131 @@ function GameResultStep({ game, onNext }) {
 function Q19ResultStep({ q19Quiz, onNext }) {
   return (
     <ResultScoreScreen
-      title="9단계. 영상 후 분리배출 퀴즈 결과"
-      desc="영상 시청 후 다시 도전한 분리배출 퀴즈 결과입니다."
+      title="10단계. 분리배출 재도전 결과"
+      desc=""
       score={q19Quiz.score}
       maxScore={q19Quiz.maxScore}
       logs={q19Quiz.logs}
-      standardText="기준: 겉 인쇄 코팅면, 종이 부분, 은박 코팅 부분, 플라스틱 뚜껑, 속뚜껑, 알루미늄 바닥 = 총 6점"
-      nextButtonText="사후 구매의향 문항으로 이동"
+      standardText=""
+      nextButtonText="다음으로"
       onNext={onNext}
+      scoreOnly
     />
   );
 }
 
 function AfterGameStep({ survey, updateAfterGame, finishAfterGame }) {
   return (
+    <PerceptionQuestionStep
+      title="6단계. 게임 후 생각 확인"
+      desc="현재 생각에 가장 가까운 답을 선택하세요."
+      values={survey.afterGame || {}}
+      updateValue={updateAfterGame}
+      onNext={finishAfterGame}
+      nextButtonText="다음으로"
+      inputNamePrefix="afterGame"
+      difficultyNo="8"
+      environmentNo="9"
+      difficultyKey="q8"
+      environmentKey="q9"
+    />
+  );
+}
+
+function PostPerceptionStep({ survey, updatePostPerception, finishPostPerception }) {
+  return (
+    <PerceptionQuestionStep
+      title="11단계. 게임 체험 및 영상 시청 후 생각 확인"
+      desc="현재 생각에 가장 가까운 답을 선택하세요."
+      values={survey.postPerception || {}}
+      updateValue={updatePostPerception}
+      onNext={finishPostPerception}
+      nextButtonText="다음으로"
+      inputNamePrefix="postPerception"
+      difficultyNo="10"
+      environmentNo="11"
+      difficultyKey="q10"
+      environmentKey="q11"
+    />
+  );
+}
+
+function PerceptionQuestionStep({
+  title,
+  desc,
+  values,
+  updateValue,
+  onNext,
+  nextButtonText,
+  inputNamePrefix,
+  difficultyNo,
+  environmentNo,
+  difficultyKey,
+  environmentKey,
+}) {
+  return (
     <>
-      <h2>5단계. 게임 직후·영상 전 인식 문항</h2>
+      <h2>{title}</h2>
+      <p className="desc">{desc}</p>
 
       <LikertQuestion
-        title="18. 원통형 포장은 버리거나 분리배출하기 어렵다고 생각한다."
-        name="q18"
-        value={survey.afterGame.q18}
-        onChange={(value) => updateAfterGame("q18", value)}
+        title={`${difficultyNo}. 원통형 포장은 버리거나 분리배출하기 어렵다고 생각한다.`}
+        name={`${inputNamePrefix}_${difficultyKey}`}
+        value={values[difficultyKey] || ""}
+        onChange={(value) => updateValue(difficultyKey, value)}
+        horizontal
       />
 
       <LikertQuestion
-        title="19. 원통형 포장은 환경 측면에서 부담이 큰 포장이라고 생각한다."
-        name="q19"
-        value={survey.afterGame.q19}
-        onChange={(value) => updateAfterGame("q19", value)}
+        title={`${environmentNo}. 원통형 포장은 환경 측면에서 부담이 큰 포장이라고 생각한다.`}
+        name={`${inputNamePrefix}_${environmentKey}`}
+        value={values[environmentKey] || ""}
+        onChange={(value) => updateValue(environmentKey, value)}
+        horizontal
       />
 
-      <button type="button" onClick={finishAfterGame}>
-        점수와 정답 확인으로 이동
+      <button type="button" onClick={onNext}>
+        {nextButtonText}
       </button>
     </>
   );
 }
 
-function LikertQuestion({ title, name, value, onChange }) {
-  return (
-    <div className="question">
-      <h3>{title}</h3>
+function LikertQuestion({ title, name, value, onChange, horizontal = false }) {
+  const [questionNo, ...questionTextParts] = title.split(". ");
+  const questionText = questionTextParts.join(". ");
 
-      <div className="options">
-        {LIKERT_OPTIONS.map((option) => (
-          <label key={option}>
+  return (
+    <div className={horizontal ? "question likert-question-horizontal" : "question"}>
+      {horizontal ? (
+        <div className="likert-question-title">
+          <span className="likert-question-no">{questionNo}</span>
+          <span className="likert-question-text">{questionText || title}</span>
+        </div>
+      ) : (
+        <h3 className="survey-question-title">{title}</h3>
+      )}
+
+      <div className={horizontal ? "options likert-horizontal-options" : "options"}>
+        {LIKERT_OPTIONS.map((option, index) => (
+          <label
+            key={option}
+            className={horizontal && value === option ? "selected" : ""}
+          >
             <input
               type="radio"
               name={name}
               checked={value === option}
               onChange={() => onChange(option)}
             />
-            {option}
+            {horizontal ? (
+              <>
+                <span className="likert-score">{index + 1}</span>
+                <span className="likert-text">{option}</span>
+              </>
+            ) : (
+              option
+            )}
           </label>
         ))}
       </div>
@@ -2319,16 +3007,18 @@ function LikertQuestion({ title, name, value, onChange }) {
   );
 }
 
-function VideoStep({ finishVideo }) {
+function VideoStep({ survey, updateVoiceQuizAnswer, finishVideo }) {
   const [videoWatched, setVideoWatched] = useState(false);
   const [videoError, setVideoError] = useState(false);
+  const answer = survey.voiceQuiz?.answer || "";
 
   return (
     <>
-      <h2>7단계. 영상 시청</h2>
+      <h2>8단계. 올바른 분리배출 방법은?</h2>
 
       <p className="desc">
-        아래 영상을 끝까지 시청한 뒤, 영상 후 터치형 퀴즈로 이동하세요.
+        영상을 끝까지 시청하면 아래에 특별 이벤트 영상 퀴즈가 나타납니다.
+        이벤트에 응모하려면 정답을 쓰세요. 입력하지 않아도 <strong>시청 완료</strong> 버튼을 누르면 다음으로 이동합니다.
       </p>
 
       <div className="shorts-video-frame">
@@ -2353,8 +3043,28 @@ function VideoStep({ finishVideo }) {
 
       {!videoWatched && !videoError && (
         <p className="video-warning">
-          영상을 끝까지 보면 아래 버튼이 활성화됩니다.
+          영상을 끝까지 보면 영상 퀴즈와 시청 완료 버튼이 활성화됩니다.
         </p>
+      )}
+
+      {videoWatched && (
+        <div className="question event-quiz-question video-inline-quiz">
+          <div className="event-notice-box video-quiz-notice">
+            <strong>특별 이벤트 영상 퀴즈</strong>
+            <p>
+              정답자 중 추첨하여 GS25 5,000원 상품권을 드립니다.
+            </p>
+          </div>
+
+          <h3 className="survey-question-title">영상 속 목소리의 주인공은 누구일까요?</h3>
+          <input
+            className="text-answer-input"
+            type="text"
+            value={answer}
+            onChange={(event) => updateVoiceQuizAnswer(event.target.value)}
+            placeholder="정답 입력하기! 이벤트에 응모하지 않으려면 '시청 완료'."
+          />
+        </div>
       )}
 
       <button
@@ -2362,7 +3072,7 @@ function VideoStep({ finishVideo }) {
         disabled={!videoWatched}
         onClick={finishVideo}
       >
-        {videoWatched ? "영상 후 터치형 퀴즈로 이동" : "영상을 끝까지 본 뒤 이동"}
+        시청 완료
       </button>
     </>
   );
@@ -2406,13 +3116,22 @@ function Q19QuizStep({
         piece.id === "body_foil")
   );
 
-  const selectedSummary = Q19_PART_DEFS.filter((part) => selectedParts[part.id]).map(
-    (part) => ({
-      partId: part.id,
-      partLabel: part.label,
-      binLabel: selectedParts[part.id].selectedBinLabel || "배출함 미선택",
-    })
+  const selectedCount = Q19_PART_DEFS.filter(
+    (part) => selectedParts[part.id]?.selectedBin
+  ).length;
+  const allPartsAssigned = Q19_PART_DEFS.every(
+    (part) => selectedParts[part.id]?.selectedBin
   );
+
+  useEffect(() => {
+    if (!allPartsAssigned || q19Quiz.finalized) return;
+
+    const timer = window.setTimeout(() => {
+      finishQ19Quiz();
+    }, 500);
+
+    return () => window.clearTimeout(timer);
+  }, [allPartsAssigned, q19Quiz.finalized, finishQ19Quiz]);
 
   function getQ19DragPiece(partId) {
     return visiblePieces.find((piece) => piece.id === partId) || null;
@@ -2482,12 +3201,15 @@ function Q19QuizStep({
 
   return (
     <>
-      <h2>8단계. 영상 후 터치형 퀴즈</h2>
+      <h2>9단계. 분리배출, 다시 도전!</h2>
 
-      <p className="desc">
-        다시 해 보는 퀴즈입니다.
-        버리고자 하는 부분을 터치하면 배출함 선택창이 뜹니다.
-      </p>
+      <div className="q19-guide-box">
+        <div className="q19-guide-title">버리고자 하는 부분을 터치하세요.</div>
+        <p>
+          선택한 부분에 맞는 배출함을 고르면 이미지가 바뀝니다.
+          더 이상 분리할 부분이 없다고 생각하면 아래의 ‘분리배출 완료’ 버튼을 누르세요.
+        </p>
+      </div>
 
       <div className="layer-game-box">
         <div className="layer-stage q19-layer-stage">
@@ -2548,36 +3270,16 @@ function Q19QuizStep({
         </div>
       </div>
 
-      <div className="q19-summary-box">
-        <div className="q19-summary-title">선택 내용</div>
-
-        {selectedSummary.length > 0 ? (
-          <div className="q19-summary-list">
-            {selectedSummary.map((item, index) => (
-              <div className="q19-summary-row" key={`${item.partLabel}-${index}`}>
-                <span className="q19-summary-part">{item.partLabel}</span>
-                <span className="q19-summary-arrow">→</span>
-                <span className="q19-summary-bin">{item.binLabel}</span>
-                <button
-                  type="button"
-                  className="summary-reset-button"
-                  onClick={() => removeQ19PartSelection(item.partId)}
-                >
-                  다시 선택
-                </button>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="q19-summary-empty">
-            아직 배출함에 넣은 조각이 없습니다.
-          </div>
-        )}
+      <div className="q19-complete-box">
+        <div className="q19-complete-title">현재 선택한 부분: {selectedCount} / {Q19_PART_DEFS.length}</div>
+        <p>
+          모든 부분을 선택하면 자동으로 결과 화면으로 이동합니다.
+          모두 찾지 못했더라도 더 이상 선택할 부분이 없다고 판단하면 완료할 수 있습니다.
+        </p>
+        <button type="button" className="q19-complete-button" onClick={finishQ19Quiz}>
+          분리배출 완료
+        </button>
       </div>
-
-      <button type="button" onClick={finishQ19Quiz}>
-        퀴즈 응답 제출
-      </button>
 
       {dragPreview && <DragPreview preview={dragPreview} />}
     </>
@@ -2654,51 +3356,156 @@ function PostSurveyStep({
   togglePostReason,
   finishPostSurvey,
 }) {
+  const postSurvey = survey.postSurvey || {};
+  const selectedReasons = postSurvey.q13 || [];
+  const hasOtherReason = selectedReasons.includes("기타");
+
   return (
     <>
-      <h2>10단계. 사후 구매의향</h2>
+      <h2>12단계. 앞으로의 선택</h2>
 
-      <div className="question">
-        <h3>
-          20. 원통형 포장이 분리배출하기 어렵다는 설명을 본 뒤에도,
-          원통형 포장 과자를 구입할 생각이 있나요?
-        </h3>
+      <LikertQuestion
+        title="12. 앞으로 원통형 포장 과자를 구입할 생각이 있나요?"
+        name="q12"
+        value={postSurvey.q12 || ""}
+        onChange={(value) => updatePost("q12", value)}
+        horizontal
+      />
 
-        <div className="options">
-          {["그렇다", "아니다", "잘 모르겠다"].map((option) => (
-            <label key={option}>
-              <input
-                type="radio"
-                name="q20"
-                checked={survey.postSurvey.q20 === option}
-                onChange={() => updatePost("q20", option)}
-              />
-              {option}
-            </label>
-          ))}
-        </div>
-      </div>
-
-      <div className="question">
-        <h3>21. 그렇게 답한 데 영향을 준 이유는 무엇입니까?</h3>
+      <div className="question post-reason-question">
+        <QuestionTitle
+          no="13"
+          text="그렇게 답한 데 영향을 준 이유를 모두 고르시오."
+          note="복수 체크 가능"
+        />
 
         <div className="options">
           {POST_REASONS.map((reason) => (
             <label key={reason}>
               <input
                 type="checkbox"
-                checked={survey.postSurvey.q21.includes(reason)}
+                checked={selectedReasons.includes(reason)}
                 onChange={() => togglePostReason(reason)}
               />
               {reason}
             </label>
           ))}
         </div>
+
+        {hasOtherReason && (
+          <label className="field post-other-field">
+            기타 내용
+            <input
+              className="text-answer-input"
+              type="text"
+              value={postSurvey.q13Other || ""}
+              onChange={(event) => updatePost("q13Other", event.target.value)}
+              placeholder="기타 이유를 직접 입력하세요."
+            />
+          </label>
+        )}
       </div>
 
+      <LikertQuestion
+        title="14. 친구들은 원통형 포장의 분리배출 문제를 알게 된 뒤에도, 원통형 포장 과자를 구입할 것 같다."
+        name="q14"
+        value={postSurvey.q14 || ""}
+        onChange={(value) => updatePost("q14", value)}
+        horizontal
+      />
+
       <button type="button" onClick={finishPostSurvey}>
-        제출 테스트
+        마지막 페이지로 이동
       </button>
+    </>
+  );
+}
+
+function EventEntryStep({
+  survey,
+  updateEventEntry,
+  submitEventEntry,
+  isSubmitting,
+}) {
+  const eventEntry = survey.eventEntry || {};
+  const isFinalSubmitted = !!eventEntry.submittedAt;
+  const hasVoiceQuizAnswer = !!(survey.voiceQuiz?.answer || "").trim();
+
+  return (
+    <>
+      <h2>마지막 페이지</h2>
+
+      <p className="desc final-thanks">
+        끝까지 참여해 주셔서 감사합니다. 
+      </p>
+
+      {hasVoiceQuizAnswer ? (
+      <div className="event-final-box">
+        <strong>특별 이벤트 응모</strong>
+        <p>
+          특별 이벤트 영상 퀴즈의 정답자를 추첨하여 GS25 5,000원 상품권을 드립니다.
+          이벤트에 응모하려면 학번과 이름을 입력하세요.
+        </p>
+        <p className="event-entry-note">
+          학번과 이름을 공란으로 두어도 설문 제출은 가능합니다.
+          다만 이벤트 응모는 학번과 이름을 모두 입력한 경우에만 처리됩니다.
+        </p>
+
+        {isFinalSubmitted ? (
+          <div className="event-entry-status">
+            {eventEntry.applied
+              ? "설문이 제출되었습니다. 이벤트 응모 정보도 함께 기록되었습니다."
+              : "설문이 제출되었습니다. 이벤트 응모 정보는 입력하지 않았습니다."}
+          </div>
+        ) : (
+          <>
+            <label className="field">
+              학번
+              <input
+                className="text-answer-input"
+                type="text"
+                value={eventEntry.studentId || ""}
+                onChange={(event) => updateEventEntry("studentId", event.target.value)}
+                placeholder="예: 10315"
+              />
+            </label>
+
+            <label className="field">
+              이름
+              <input
+                className="text-answer-input"
+                type="text"
+                value={eventEntry.name || ""}
+                onChange={(event) => updateEventEntry("name", event.target.value)}
+                placeholder="이름을 입력하세요"
+              />
+            </label>
+
+             <button type="button" onClick={submitEventEntry} disabled={isSubmitting}>
+                {isSubmitting ? "저장 중..." : "설문 제출하기"}
+              </button>
+            </>
+          )}
+        </div>
+      ) : (
+        <div className="event-final-box">
+          <strong>설문 제출</strong>
+          <p>
+            특별 이벤트 영상 퀴즈에 응답하지 않았으므로 이벤트 응모 정보는 입력하지 않습니다.
+            아래 버튼을 누르면 설문이 제출됩니다.
+          </p>
+
+          {isFinalSubmitted ? (
+            <div className="event-entry-status">
+              설문이 제출되었습니다. 참여해 주셔서 감사합니다.
+            </div>
+          ) : (
+            <button type="button" onClick={submitEventEntry} disabled={isSubmitting}>
+              {isSubmitting ? "저장 중..." : "설문 제출하기"}
+            </button>
+          )}
+        </div>
+      )}
     </>
   );
 }
