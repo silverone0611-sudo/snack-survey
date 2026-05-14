@@ -1074,7 +1074,7 @@ export default function App() {
     setBinModal({
       type: "game",
       partId,
-      title: `${partLabel}은 어디에 버릴까요?`,
+      title: `${partLabel}를 어디에 버릴까요?`,
       desc: "알맞은 배출함을 선택하세요.",
     });
   }
