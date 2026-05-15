@@ -590,9 +590,17 @@ function joinReasons(value) {
   return Array.isArray(value) ? value.join(" | ") : "";
 }
 
-function buildSurveyRow(nextSurvey, hasFullEventInfo) {
+function buildSurveyRow(nextSurvey, hasFullEventInfo, meta = {}) {
+  const now = new Date().toISOString();
+  const status = meta.status || "in_progress";
+
   return {
     respondent_no: nextSurvey.respondentNo,
+
+    status,
+    last_step: meta.lastStep || "intro",
+    pre_index: meta.preIndex ?? 0,
+
     grade: nextSurvey.grade,
     gender: nextSurvey.gender,
 
@@ -635,6 +643,13 @@ function buildSurveyRow(nextSurvey, hasFullEventInfo) {
     event_applied: hasFullEventInfo,
     event_student_id: hasFullEventInfo ? nextSurvey.eventEntry?.studentId || "" : null,
     event_name: hasFullEventInfo ? nextSurvey.eventEntry?.name || "" : null,
+
+    survey_json: nextSurvey,
+    game_logs_json: nextSurvey.game?.logs || [],
+    q19_logs_json: nextSurvey.q19Quiz?.logs || [],
+
+    updated_at: now,
+    completed_at: status === "completed" ? now : null,
 
     payload: nextSurvey,
   };
@@ -744,6 +759,41 @@ export default function App() {
         survey,
       })
     );
+
+    const hasStarted = step !== "intro" || survey.grade || survey.gender;
+
+  if (!hasStarted) return;
+
+    const timer = window.setTimeout(async () => {
+    const hasVoiceQuizAnswer = !!(survey.voiceQuiz?.answer || "").trim();
+    const hasFullEventInfo =
+      hasVoiceQuizAnswer &&
+      !!(survey.eventEntry?.studentId || "").trim() &&
+      !!(survey.eventEntry?.name || "").trim();
+
+    const status = survey.eventEntry?.submittedAt
+      ? "completed"
+      : step === "intro"
+      ? "started"
+      : "in_progress";
+
+    const row = buildSurveyRow(survey, hasFullEventInfo, {
+      status,
+      lastStep: step,
+      preIndex,
+    });
+
+    const { error } = await supabase
+      .from("snack_survey_responses")
+      .upsert(row, { onConflict: "respondent_no" });
+
+    if (error) {
+      console.error("Supabase 중간 저장 오류:", error);
+    }
+  }, 800);
+
+  return () => window.clearTimeout(timer);
+
   }, [step, preIndex, survey]);
 
   function updateBasic(field, value) {
@@ -1313,13 +1363,18 @@ export default function App() {
       eventEntry: nextEventEntry,
     };
 
-    const row = buildSurveyRow(nextSurvey, hasFullEventInfo);
+    const row = buildSurveyRow(nextSurvey, hasFullEventInfo, {
+
+     status: "completed",
+     lastStep: "done",
+     preIndex,
+   });
 
     setIsSubmitting(true);
 
     const { error } = await supabase
       .from("snack_survey_responses")
-      .insert(row);
+      .upsert(row, { onConflict: "respondent_no" });
 
     setIsSubmitting(false);
 
