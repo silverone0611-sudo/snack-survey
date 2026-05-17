@@ -112,6 +112,10 @@ const CONVENIENCE_ITEMS = [
     id: "q7_4",
     title: "7-4. 원통형 포장은 들고 다니며 먹기 편하다고 생각한다.",
   },
+  {
+    id: "q7_5",
+    title: "7-5. 나는 과자 포장을 올바르게 분리배출할 수 있다.",
+  },
 ];
 
 const LIKERT_OPTIONS = [
@@ -541,6 +545,7 @@ function createInitialSurvey() {
       q7_2: "",
       q7_3: "",
       q7_4: "",
+      q7_5: "",
     },
     afterGame: {
       q8: "",
@@ -618,6 +623,7 @@ function buildSurveyRow(nextSurvey, hasFullEventInfo, meta = {}) {
     q7_2_stack_convenience: nextSurvey.convenienceSurvey?.q7_2 || "",
     q7_3_breakage_protection: nextSurvey.convenienceSurvey?.q7_3 || "",
     q7_4_portable_convenience: nextSurvey.convenienceSurvey?.q7_4 || "",
+    q7_5_recycle_confidence: nextSurvey.convenienceSurvey?.q7_5 || "",
 
     pre_game_score: nextSurvey.game?.score ?? 0,
     pre_game_max_score: nextSurvey.game?.maxScore ?? 0,
@@ -958,7 +964,7 @@ export default function App() {
     const unansweredItem = CONVENIENCE_ITEMS.find((item) => !convenienceSurvey[item.id]);
 
     if (unansweredItem) {
-      alert("7-1번부터 7-4번까지 모두 응답하세요.");
+      alert("7-1번부터 7-5번까지 모두 응답하세요.");
       return;
     }
 
@@ -1598,8 +1604,9 @@ export default function App() {
             <h1>과자 포장에 대한 인식과 태도 조사</h1>
 
             <p className="desc">
-              과자를 고를 때 어떤 포장을 더 좋아하는지, 그리고 포장을 버릴 때 어떤 부분이 어려운지 알아보는 조사입니다.
-              이미지와 영상이 포함되어 있어 화면 전환 시 잠시 로딩될 수 있습니다. 
+              과자는 청소년의 일상에서 자주 접하는 기호식품입니다.  <br />
+  본 설문은 과자를 고를 때 포장 형태가 선호도와 구매 의향에 어떤 영향을 주는지 알아보기 위한 조사입니다. 또한 보관의 편리성, 먹을 때의 편리성, 분리배출의 어려움 등 과자 소비 전 과정에서 느끼는 경험과 인식을 함께 확인합니다.<br />
+  설문에는 직접 터치하며 참여하는 분리배출 미니게임과 영상 퀴즈가 포함되어 있어서 화면 전환 시 잠시 로딩될 수 있습니다. 
               <span className="intro-warning">설문 중 이미지가 바로 뜨지 않아도 잠시 기다려 주세요.</span>
             </p>
 
@@ -3420,7 +3427,7 @@ function PostSurveyStep({
       <h2>12단계. 앞으로의 선택</h2>
 
       <LikertQuestion
-        title="12. 앞으로 원통형 포장 과자를 구입할 생각이 있나요?"
+        title="12. 앞으로 원통형 포장 과자를 구입하거나 먹을 생각이 있나요?"
         name="q12"
         value={postSurvey.q12 || ""}
         onChange={(value) => updatePost("q12", value)}
