@@ -767,8 +767,9 @@ export default function App() {
     );
 
     const hasStarted = step !== "intro" || survey.grade || survey.gender;
+    const isAlreadySubmitted = !!survey.eventEntry?.submittedAt;
 
-  if (!hasStarted) return;
+  if (!hasStarted || isSubmitting || isAlreadySubmitted) return;
 
     const timer = window.setTimeout(async () => {
     const hasVoiceQuizAnswer = !!(survey.voiceQuiz?.answer || "").trim();
@@ -800,7 +801,7 @@ export default function App() {
 
   return () => window.clearTimeout(timer);
 
-  }, [step, preIndex, survey]);
+  }, [step, preIndex, survey, isSubmitting]);
 
   function updateBasic(field, value) {
     setSurvey((prev) => ({
@@ -1399,14 +1400,15 @@ export default function App() {
   }
 
 
-  function finishVideo() {
+  function finishVideo(videoHadError = false) {
     const answer = (survey.voiceQuiz?.answer || "").trim();
 
     setSurvey((prev) => ({
       ...prev,
       video: {
-        watched: true,
+        watched: !videoHadError,
         watchedAt: new Date().toISOString(),
+        error: videoHadError,
       },
       voiceQuiz: {
         ...(prev.voiceQuiz || {}),
@@ -3099,7 +3101,7 @@ function VideoStep({ survey, updateVoiceQuizAnswer, finishVideo }) {
 
       {videoError && (
         <p className="video-warning">
-          영상 파일을 불러오지 못했습니다. public/videos/snack-shorts.mp4 경로와 파일명을 확인하세요.
+          영상 파일을 불러오지 못했습니다.  관리자에게 알려 주세요. 그래도 설문은 다음 단계로 진행할 수 있습니다.
         </p>
       )}
 
@@ -3131,10 +3133,10 @@ function VideoStep({ survey, updateVoiceQuizAnswer, finishVideo }) {
 
       <button
         type="button"
-        disabled={!videoWatched}
-        onClick={finishVideo}
+        disabled={!videoWatched && !videoError}
+        onClick={() => finishVideo(videoError)}
       >
-        시청 완료
+        {videoError ? "영상 오류로 다음 단계 진행" : "시청 완료"}
       </button>
     </>
   );
