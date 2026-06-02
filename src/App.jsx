@@ -1623,7 +1623,7 @@ export default function App() {
               </p>
 
               <p>
-                정답자 중 추첨하여 <span className="event-prize">GS25 5,000원 상품권</span>을 드립니다. 이벤트 응모는 설문 마지막 화면에서 할 수 있습니다.
+                정답자 중 추첨하여 <span className="event-prize">특별 선물</span>을 드립니다. 이벤트 응모는 설문 마지막 화면에서 할 수 있습니다.
               </p>
             </div>
 
@@ -3116,7 +3116,7 @@ function VideoStep({ survey, updateVoiceQuizAnswer, finishVideo }) {
           <div className="event-notice-box video-quiz-notice">
             <strong>특별 이벤트 영상 퀴즈</strong>
             <p>
-              정답자 중 추첨하여 GS25 5,000원 상품권을 드립니다.
+              정답자 중 추첨하여 특별 선물을 드립니다.
             </p>
           </div>
 
@@ -3507,7 +3507,7 @@ function EventEntryStep({
       <div className="event-final-box">
         <strong>특별 이벤트 응모</strong>
         <p>
-          특별 이벤트 영상 퀴즈의 정답자를 추첨하여 GS25 5,000원 상품권을 드립니다.
+          특별 이벤트 영상 퀴즈의 정답자를 추첨하여 특별 선물을 드립니다.
           이벤트에 응모하려면 학번과 이름을 입력하세요.
         </p>
         <p className="event-entry-note">
