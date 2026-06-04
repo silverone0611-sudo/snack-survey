@@ -3504,11 +3504,11 @@ function EventEntryStep({
         소정의{" "}
       <strong style={{ color: "#d32f2f" }}>선물</strong>
        이 준비되어 있습니다.<br />
-       설문을{" "}
-      <strong style={{ color: "#d32f2f" }}>완료</strong>
+       {" "}
+      <strong style={{ color: "#d32f2f" }}>설문을 완료</strong>
        한 학생은{" "}
       <strong style={{ color: "#d32f2f" }}>1층 교무실</strong>
-       김선미 선생님께 찾아가{" "}
+        김선미 선생님께 찾아가{" "}
       <strong style={{ color: "#d32f2f" }}>선물</strong>
        을 받아가세요.
       </p>
