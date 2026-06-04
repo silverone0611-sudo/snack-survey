@@ -3501,10 +3501,12 @@ function EventEntryStep({
 
       <p className="desc final-thanks">
         설문에 참여해 주셔서 감사합니다.<br />
-       
+      </p>       
+
       {hasVoiceQuizAnswer ? (
       <div className="event-final-box">
       <strong>설문 참여자 전원 선물</strong>
+       <p>
        소정의{" "}
       <strong style={{ color: "#d32f2f" }}>선물</strong>
        이 준비되어 있습니다.<br />
