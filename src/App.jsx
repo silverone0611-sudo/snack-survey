@@ -1619,7 +1619,7 @@ export default function App() {
               </p>
  
               <p className="event-hint">
-                힌트! 우리학교 2학년이에요.
+                힌트! "ㄱㅈㅇ" 우리학교 2학년이에요. 
               </p>
 
               <p>
